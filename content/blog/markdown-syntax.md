@@ -8,6 +8,6 @@ taxonomies.tags = [
 ]
 +++
 
-# The Beginnings
+## The Beginnings
 
 I have been selfhosting since i received my Raspberry Pi 1 from the very first batch, mostly SSH and NFS to access a 3.5" HDD attached via USB. 
