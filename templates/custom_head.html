@@ -1,41 +1,30 @@
 
- <h1 >lackhove.de</h1>
+ <h1 style="color:#00B0FF ">lackhove.de</h1>
 
-
+<!-- palette
+red #FF3D00
+yellow #FFEA00
+green #00E676
+blue #00B0FF
+purple #D5006D
+-->
 <style>
   :root {
-      --width: 800px;
-      --font-main: 'Roboto Mono', monospace;
-      --font-secondary: 'Roboto Mono', monospace;
+    --width: 800px;
+    --font-main: Verdana, sans-serif;
+    --font-heading: 'Roboto Mono', monospace;
     --font-scale: 1em;
-    --background-color: #fff;
-    --heading-color: #222;
-    --text-color: #444;
-    --link-color: #444;
-    --visited-color: #8b6fcb;
-      --main-color: #0000ff;
-    --code-background-color: #f2f2f2;
-    --code-color: #222;
-    --blockquote-color: #222;
-      --big-border-color: #232333;
-      --background-color-dark: #333;
-      --text-color-dark: #ddd;
-      --visited-color-dark: #000;
-      --link-color-dark: #000;
-      --big-border-color-dark: #888;
-  }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background-color: #01242e;
-      --heading-color: #eee;
-      --text-color: #ddd;
-      --link-color: #8cc2dd;
-      --visited-color: #444;
-      --code-background-color: #000;
-      --code-color: #ddd;
-      --blockquote-color: #ccc;
-    }
+    --background-color: #fff;
+    --heading-color: #000;
+    --text-color: #000;
+    --link-color: #00E676;
+    --visited-color: #000;
+    --hover-color: #00E676;
+    --selection-color: #D5006D;
+    --code-background-color: #f7f7f7;
+    --code-color: #000;
+
   }
 
   body {
@@ -58,23 +47,33 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-main);
+    font-family: var(--font-heading);
     color: var(--heading-color);
   }
 
   a {
-      color: var(--link-color);
+      color: var(--text-color);
       font-family: var(--font-main);
       cursor: pointer;
       text-decoration: none;
-      border-bottom: 1px solid #00ff00;
+      border-bottom: 1px solid var(--link-color);
   }
 
   a:hover {
-      background-color: var(--main-color);
+      background-color: var(--hover-color);
       color: white;
       text-decoration: none;
   }
+
+  ::-moz-selection {
+  color: white;
+  background: var(--selection-color);
+}
+
+::selection {
+  color: white;
+  background: var(--selection-color);
+}
 
   nav a {
     margin-right: 8px;
@@ -110,6 +109,33 @@
   img {
     max-width: 100%;
   }
+
+  pre {
+  padding: 1rem;
+  overflow: auto;
+}
+/* The line numbers already provide some kind of left/right padding */
+pre[data-linenos] {
+  padding: 1rem 0;
+}
+pre table td {
+  padding: 0;
+}
+/* The line number cells */
+pre table td:nth-of-type(1) {
+  text-align: center;
+  user-select: none;
+}
+pre mark {
+  /* If you want your highlights to take the full width */
+  display: block;
+  /* The default background colour of a mark is bright yellow */
+  background-color: rgba(254, 252, 232, 0.9);
+}
+pre table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
   pre code {
     background-color: var(--code-background-color);
@@ -174,12 +200,21 @@
     display: flex;
   }
 
+
+
+
   ul.blog-posts li span {
     flex: 0 0 130px;
   }
 
   ul.blog-posts li a:visited {
-    color: var(--visited-color);
+    color: var(--text-color);
+  }
+
+  ul.blog-posts li a:hover {
+      background-color: var(--hover-color);
+      color: white;
+      text-decoration: none;
   }
 
   .tags {
