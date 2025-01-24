@@ -9,17 +9,18 @@
 
 :root {
     --width: 800px;
-    --font-main: 'Space Mono';
+    --font-main: 'Space Grotesk';
     --font-heading: 'Space Mono';
     --font-scale: 1em;
 
     --background-color: #fff;
     --heading-color: #000;
     --text-color: #000;
-    --link-color: #00E676;
+    --link-color: #4ce5ed;
     --visited-color: #000;
-    --hover-color: #00E676;
-    --selection-color: #D5006D;
+    #--hover-color: #ed4ce5;
+    --hover-color: #4ce5ed;
+    --selection-color: #4ce5ed;
     --code-background-color: #f7f7f7;
     --code-color: #000;
 
