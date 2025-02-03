@@ -1,3 +1,14 @@
  <link rel="stylesheet" href="{{ get_url(path='style/shared.css') }}">
 
- <img src = "/logo.svg" width="400" alt="lackhove.de logo"/>
+<!-- <img src="/logo.svg" class="color-invertible" width="400" alt="lackhove.de logo"/>-->
+
+ <picture>
+  <!-- User prefers light mode: -->
+  <source srcset="/logo.svg" width="400" media="(prefers-color-scheme: light)"/>
+
+  <!-- User prefers dark mode: -->
+  <source srcset="/logo-dark.svg" width="400" media="(prefers-color-scheme: dark)"/>
+
+  <!-- User has no color preference: -->
+  <img src="/logo.svg" width="400"/>
+</picture>
