@@ -23,7 +23,20 @@
     --selection-color: #4ce5ed;
     --code-background-color: #f7f7f7;
     --code-color: #000;
+  }
 
+ @media (prefers-color-scheme: dark) {
+    :root {
+    --background-color: #000;
+    --heading-color: #fff;
+    --text-color: #fff;
+    --link-color: #4ce5ed;
+    --visited-color: #fff;
+    --hover-color: #4ce5ed;
+    --selection-color: #4ce5ed;
+       --code-background-color: #000;
+      --code-color: #ddd;
+    }
   }
 
   body {
