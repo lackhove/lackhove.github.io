@@ -28,7 +28,7 @@ integration, is written in Python, and is open source – a perfect starting poi
 
 Using Calliope, the basic workflow begins by converting existing XSPF playlists to Calliope's JSON lines format:
 
-```shell
+```bash
 $ calliope import ~/Playlists/example.xspf > example.jspf
 ```
 
@@ -45,7 +45,7 @@ After this step, example.jspf contains entries like this for each track:
 Before this playlist can be uploaded to Spotify, its items need to be "resolved" against the Spotify catalog to add
 Spotify-specific metadata:
 
-```shell
+```bash
 $ calliope spotify --user=<username> resolve example.jspf
 ```
 
@@ -176,7 +176,7 @@ In such cases, for non-interactive runs, Calliope will skip the item and issue a
 interactively, it presents a sorted list of the top candidates, showing their score and formatted details, and prompts
 the user to manually select the best match:
 
-```shell
+```
 $ calliope   spotify resolve --interactive example.jspf --output=example-spotify.jspf
 Best 100 candidates for The Verve - Bitter Sweet Symphony:
  1 (93.25%): The Verve - Bitter Sweet Symphony (The Verve, 1997-01-01, 4 tracks) - Bitter Sweet Symphony
@@ -231,7 +231,7 @@ powerful search and AFAIK is the most comprehensive and freely available music d
 
 Let's try our initial example, "Bitter Sweet Symphony," again, but resolve it against MusicBrainz first:
 
-```shell
+```bash
 $ python -m calliope   musicbrainz annotate --interactive example.jspf --output=example-musicbrainz.jspf
 ```
 
@@ -265,7 +265,7 @@ correct item with a very high score and didn't even need me to intervene? Even b
 GBAAA9710468"), which is a unique international identifier for sound recordings. We can now use this ISRC to search
 Spotify directly:
 
-```shell
+```bash
 $ calliope spotify resolve --interactive example-musicbrainz.jspf --output=example-spotify.jspf
 ```
 
@@ -309,7 +309,7 @@ original playlist item's duration, and we achieved this without any manual selec
 
 Finally, importing the resolved playlist into Spotify is as easy as:
 
-```shell
+```bash
 $ calliope spotify import example-spotify.jspf
 ```
 
@@ -321,7 +321,7 @@ for Beets, which is perfect for obtaining structured data about my local library
 
 We can use th Beets adapter to generate a list of all my albums:
 
-```shell
+```bash
 $ calliope beets albums > albums.jspf
 ```
 
@@ -337,7 +337,7 @@ This produces JSON entries for each album, like:
 
 Similar to the track example, this list can first be resolved against MusicBrainz:
 
-```shell
+```bash
 $ calliope   musicbrainz annotate --interactive albums.jspf --output=collection_albums-mb.jspf
 ```
 
@@ -386,7 +386,7 @@ It successfully linked the local album to its Spotify equivalent.
 After adding a small patch (also included in a 4.0 release), Calliope can now import albums and
 artists directly into the "My Library" section on Spotify:
 
-```shell
+```bash
 calliope spotify import albums-sp.jspf --library
 ```
 
