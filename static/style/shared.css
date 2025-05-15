@@ -232,3 +232,23 @@ pre table {
   .tags {
     font-size: smaller;
   }
+
+
+
+/* Style for the link wrapper */
+.social-icon-link {
+    align-items: center;
+    margin-right: 0px; /* Add some space between icons/links */
+    text-decoration: none; /* Remove underline from the link */
+    color: inherit; /* Inherit text color */
+}
+
+/* Style for the SVG icon itself */
+.social-icon {
+    width: 14px; /* Adjust size as needed */
+    height: 14px; /* Adjust size as needed */
+    fill: currentColor; /* Make the SVG color match the link/text color */
+    margin-right: 1px; /* Space between icon and text if you add text */
+    vertical-align: baseline; /* Align icon vertically */
+}
+
