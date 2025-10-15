@@ -46,7 +46,7 @@ or in short: **minimize complexity**.
 
 ## The Setup
 
-### Level 0: Hardware
+### Level 0: The Hardware
 
 As mentionend earlier, the hardware is a mini-ITX server with an Intel N100 low power CPU, a cheap SSD and two 3.5" HDDs. What i like about the Asus mainborad is that it doesnt have a fan, so one less mechanical part that might fail. The more interestin part is the [PiKVM](https://pikvm.org/) attached to the server, which gives me full control of the system, even on the road: I can push the power and reset buttons, see the screen, acces the and even virtually plug ISO images into the USB drive. In my case, this has several advantages, compared to e.g. virtualization platforms:
 * I have full access to the system, even when powered off and before boot
@@ -65,10 +65,10 @@ $ transactional-update apply
 which switches into the next snapshot immediately. This command should also be applied after each alteration to the current snapshot, because new snapshot are always derived from the current one, overwritigng changes made to the next one in line. Installing packages (also with `transactional-update`) will automatically create a new snapshot, so going back to the current, working state is as easy as selecting a different snapshot at boot or running `transactional-update rollback`. 
 
 Since i am trying to minimize complexity here,  try to only configure the most basic stuff, such as:
-* keyboard and locale
+* timezone, keyboard and locale
 * ssh setup with `PermitRootLogin without-password`
 * Additional File system mounts
-* mail and smartmontoos (I havent found a good contaiern for this task yet)
+* mail and mdadm notifications (I havent found a good contaiern for this task yet)
 everything else should go into a container and for sysadmin tasks, OpenSUSE recommends using distrobox (which ive never used though). 
 
 Did i mention the key feature of MicroOS was reliable, autmatic updates? These must be enabled manually via
@@ -89,8 +89,9 @@ Most functionality is implemented in in dedicated containers, so we need to set 
 ```bash
 $ systemctl enable --now podman-auto-update.timer
 ```
-This wil produce lots of unused images, which we can automatically clean up by adding custom units at `/etc/systemd/system/podman-prune.service`:
+This wil produce lots of unused images, which we can automatically clean up by adding custom units:
 ```ini
+# /etc/systemd/system/podman-prune.service
 [Unit]
 Description=Podman prune service
 Wants=network.target
@@ -102,8 +103,9 @@ ExecStart=/usr/bin/podman system prune -a --volumes -f
 [Install]
 WantedBy=multi-user.target default.target`
 ```
-and `/etc/systemd/system/podman-prune.timer`:
+and:
 ```ini
+# /etc/systemd/system/podman-prune.timer
 [Unit]
 Description=Podman prune timer
 
@@ -142,11 +144,14 @@ $ systemctl --user enable --now podman-prune.timer
 ```
 Now we are ready to add our first container
 
-#### Container Setup
+### Level 2: Containers
 
-With podman, all we need to manage our container lifecycle is systemd, so again, no need for complex contaienr management or orchestration systems such as docker-compose or k8s. Since the integration of quadlet into podman, we dont even need to manually write, manage and update systemd units anymore. Instead, all our containers are managed via simpe ini files in `/etc/container`. The corresponding systemd unit files are created at boot (or `systemctl --user daemon-reload`) and even the users containers are managed right in the `/etc` dir, which further simplifies backup and restore. A simple example would be my `/etc/containers/systemd/users/1000/mosquitto.container` file:
+
+#### Basic setup
+
+With podman, all we need to manage our container lifecycle is systemd, so again, no need for complex contaienr management or orchestration systems such as docker-compose or k8s. Since the integration of quadlet into podman, we dont even need to manually write, manage and update systemd units anymore. Instead, all our containers are managed via simpe ini files in `/etc/container`. The corresponding systemd unit files are created at boot (or `systemctl --user daemon-reload`) and even the users containers are managed right in the `/etc` dir, which further simplifies backup and restore. A simple example would be:
 ```ini
-# mosquitto.container
+# /etc/containers/systemd/users/1000/mosquitto.container
 [Service]
 Restart=on-failure
 TimeoutStopSec=70
@@ -164,11 +169,12 @@ Volume=/var/lib/docker-confs/mosquitto/log:/mosquitto/log/:Z,U
 [Install]
 WantedBy=default.target
 ```
-Isnt that beatiful? 
+Isnt that beatiful? Here i defined that, amongst other things the container image should be auto updated by our `podman-auto-update` service, publish ports and mount volumes with correct SELINUX labels and auto adjusted permissions. 
 
-For more complex applications, we can leverage podmans pods, which basically allow network communication between containers over localhos tposts, saving us from the complexity of container networks. [karakeep](https://karakeep.app/) for instance, requires several containers talking to each other. So we have the following container files:
-* `/etc/containers/systemd/users/1000/karakeep-chrome.container`:
-  ```ini
+
+For multi container applications, we can leverage podmans pods, which basically allow network communication between containers over localhost ports, saving us from the complexity of container networks. [karakeep](https://karakeep.app/) for instance, requires a chome and a meiliseeach container in addition to the application itself. So for this, i have the following container files:
+* ```ini
+  # /etc/containers/systemd/users/1000/karakeep-chrome.container
   [Service]
   Restart=on-failure
   TimeoutStopSec=70
@@ -181,8 +187,8 @@ For more complex applications, we can leverage podmans pods, which basically all
   Exec=--no-sandbox --disable-gpu --disable-dev-shm-usage '--remote-debugging-address=0.0.0.0' '--remote-debugging-port=9222' --hide-scrollbars
   Environment=KARAKEEP_VERSION=release
   ```
-* `/etc/containers/systemd/users/1000/karakeep-meilisearch.container`:
-  ```ini
+* ```ini
+  # /etc/containers/systemd/users/1000/karakeep-meilisearch.container
   [Service]
   Restart=on-failure
   TimeoutStopSec=70
@@ -195,8 +201,8 @@ For more complex applications, we can leverage podmans pods, which basically all
   ContainerName=karakeep-meilisearch
   Volume=/var/lib/docker-confs/karakeep/meilisearch:/meili_data:Z
   ```
-* `/etc/containers/systemd/users/1000/karakeep-web.container`:
-  ```ini
+* ```ini
+  # /etc/containers/systemd/users/1000/karakeep-web.container
   [Service]
   Restart=on-failure
   TimeoutStopSec=70
@@ -217,18 +223,110 @@ PublishPort=8012:3000
 [Install]
 WantedBy=default.target
 ```
+As most applications, karakeep only has a docker-compose file in its documentation. Instead of manually converting these to plain old podman quadlet files, we can leverage [podlet](https://github.com/containers/podlet) which can _"Convert a (docker) compose file to [...] A Quadlet .pod file and .container files."._ The resulting files require minimal adjustments to include e.g. the right hostnames and auto updating.
 
 
 
+#### Web Access
+
+An application such as karakeep sshould be accessible from the internet, so we need a reverse proxy. I prefer [traefik](https://doc.traefik.io/traefik/) for its excellent documentation and its simple setup (Yes, you read that right). Mixing reverse proxy and  container configs by adding container labels is not for me, so i just went with an oldschool traefik config: 
+```yaml
+# /var/lib/docker-confs/traefik/traefik.yml
+providers:
+  file:
+    directory: /etc/traefik/dynamic/
+
+entryPoints:
+  web:
+    address: ":80"
+    transport:
+      respondingTimeouts:
+        readTimeout: 600
+  websecure:
+    address: ":443"
+    transport:
+      respondingTimeouts:
+        readTimeout: 600
 
 
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: <redacted>
+      storage: /etc/traefik/acme.json
+      httpChallenge:
+        entryPoint: web
+```
+and a bunch of dynamic configs:
+```toml
+# /var/lib/docker-confs/traefik/dynamic/karakeep.toml
+[http]
+  [http.middlewares]
+    [http.middlewares.karakeep-redirect.redirectScheme]
+        scheme = "https"
+
+  [http.routers.karakeep-redirect]
+    entrypoints = ["web"]
+    rule = "Host(`<redacted>`)"
+    middlewares = ["karakeep-redirect"]
+    service = "karakeep"
 
 
+  [http.routers.karakeep]
+    entrypoints = ["websecure"]
+    rule = "Host(`<redacted>`)"
+    service = "karakeep"
+    [http.routers.karakeep.tls]
+        certResolver = "letsencrypt"
+
+  [http.services]
+    [http.services.karakeep.loadBalancer]
+      [[http.services.karakeep.loadBalancer.servers]]
+        url = "http://host.containers.internal:8012/"
+```
+Again, this is beatifully explicit and simple: We tell traefik where to find our dynamic configs, set ports and timeouts and letsencrypt. For each service, we tell it to redirect http requests to the https router, and pass them to port 8012 of the host machine. Thats it! 
+
+My only pevee here is that in order to access all services and privileged ports, i am currently running this container as root. This can probably be fixed easily but i still havent found the time oir motivation.
 
 
+#### IPv6
+
+Now one pice is till missing, IPv6! I dont have a static IP address, so i rely on DynDNS for accessing my server from outside the home network. Since IPv6  doesnt have NAT, i cant just use the hosts IPv6 address. Podman doenst automatically forward IPv6 traffic also, so in  [the corresponding podman issue](https://github.com/containers/podman/issues/4311) the best advice seems to be using socat to just convert all IPv6 traffic to IPv4 internally. This is what i am using:
+```ini
+# /etc/systemd/system/socat-http.service
+[Unit]
+Description=Socat http proxy service
+Wants=network.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/socat TCP6-LISTEN:80,ipv6only=1,fork,su=nobody TCP4:localhost:80
+
+[Install]
+WantedBy=multi-user.target default.target
+```
+and
+```ini
+#/etc/systemd/system/socat-https.service
+[Unit]
+Description=Socat http proxy service
+Wants=network.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/socat TCP6-LISTEN:443,ipv6only=1,fork,su=nobody TCP4:localhost:443
+
+[Install]
+WantedBy=multi-user.target default.target
+```
+There is probably a more elegant solution to this problem, but i actually have never had any issues in five years or even wasted a thought on this, so why change it.
+
+The next issue was related to DynDNS. There simply was (or still is?) no DynDNS client available that had proper IPv6 support, so i had to build my own [tiny IPv6 dyndns updater](https://gitlab.com/lackhove/ddupdate), but this is probably worth a separate article.
 
 
+## Next Steps
+
+As with any selfhosting setups, you are never finished. 
 
 
-
-
+...
