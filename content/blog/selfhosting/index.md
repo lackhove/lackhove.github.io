@@ -34,23 +34,25 @@ Despite the last setup working great, it still had two disadvantages: OS updates
 **x86 mini-ITX server with RAID 1, openSUSE MicroOS**
 My only remaining peeve with Fedora CoreOS was the slow updates due to `ostree` and that it often broke and required manual intervention during major OS version upgrades. I realized a rolling-release distro could avoid this particular complexity chore. I was delighted to discover openSUSE MicroOS, an immutable container host system like Fedora CoreOS but with Btrfs instead of `ostree` and—tadaa—a rolling release model! Without major OS release upgrades, the system has been absolutely rock solid for me since summer 2020.
 
-## Lessons Learned
 
-<!-- Every additional piece of hardware, daemon, container, service, or configuration file drastically increases your cognitive load and the likelihood of frustrating late-night issues. -->
+## If It's Complicated, It's a Chore
 
-The main thing I learned in 13 years of self-hosting is that when moving from hosting a simple file server for yourself to a range of critical services for family and friends, the top priorities should be reliability and simplicity. You really don't want to start debugging your Kubernetes setup when an update made the living room lights go haywire on Christmas Eve. My current setup is heavily designed to:
+The main thing I learned in 13 years of self-hosting is that when moving from hosting a simple file server for yourself to a range of critical services for family and friends, the top priority is reducing complexity. Every additional piece of hardware, daemon, container, service, or even configuration file  increases your the cognitive load and the likelyhood of failures, issues and security risks. Or to put it more graphic: You really don't want to start debugging your Kubernetes setup when an update made the living room lights go haywire on Christmas Eve. 
 
-* **Maximize inherent security:** I don't have the time to closely monitor the system, so the likelihood of a security issue is minimized by following best practices and keeping all software up to date automatically. In addition, SELinux and Podman rootless containers reduce the impact of a security breach. Needless to say, the number of services reachable from the internet is minimized.
+Reducing complexity gives me the benefits of (in no particular order):
 
-* **Minimize the number of components:** Fewer moving parts means fewer parts that might break. I decided against using hypervisors such as Proxmox, IaaS systems such as Ansible, orchestration such as Kubernetes, and container management tools such as Portainer. Just a minimal, immutable bare metal OS and a bunch of rootless Podman containers. No more than two points of failure for most services.
+* **Almost no maintenance:** I cant remember when i had to log on to the server to do some chores. Thanks to OpenSUSE MicroOS's transactional updates and Podman's auto-updating containers, the entire stack is always current and even automatically rolls back if a bad update breaks something.
 
-* **Minimize maintenance:** I want to be the one who decides when I spend time on my home server, not some release schedule of the software I am running. So the server should stay running mostly by itself.
+* **Inherent security:** By keeping the system and containers up to date, maintaining a minimal host environment and exposing only whats necessary, the attack surface is drastically minimized. If a contaienr is breached, the the impact is minimized by SELinux, rootless Podman containers and having a minimal, immutable  host OS.
 
-* **Minimize complexity:** I log on to the server every few months, so I probably won't remember the super complex service configuration or the utterly clever solution I implemented. KISS, so avoid unnecessary software with huge config files or components with poor documentation or few users.
+* **Reduced Cognitive Load**: I log on to my server every few months, so I can't rely on remembering complex service configurations. By deliberately avoiding layers like hypervisors (Proxmox), orchestration (Kubernetes/Ansible), and management GUIs (Portainer), the infrastructure is defined by simple systemd units and human-readable config files. Simple solutions are always easier to debug when you're under pressure.
 
-* **Maximize reliability:** Systems tend to fail at the most inconvenient moments, so ideally, they shouldn't fail at all. Without redundant hardware or a UPS, this goal is quite unrealistic, so I try to minimize the impact of failures and ensure that disaster recovery is swift and simple.
+* **Swift Disaster Recovery:** Failure is inevitable, so my goal is to minimizie its impact. Thanks to the atomic updates and snaphots, I can recover the entire host operating system to a known good state with a single command. Moreover, the system is simple enough to be restored on new hardware from a backup with rsync.
 
-Or in short: **minimize complexity**.
+* **Minimized Points of Failure:** Fewer moving parts means fewer parts that might break. I decided against using hypervisors such as Proxmox, IaaS systems such as Ansible, orchestration such as Kubernetes, and container management tools such as Portainer. Just a minimal, immutable bare metal OS and a bunch of rootless Podman containers. This simplicity removes points of failures and makes diagnosing issues straightforward.
+
+
+
 
 
 ## The Setup
