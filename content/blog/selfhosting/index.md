@@ -4,46 +4,32 @@ date = 2025-10-10
 +++
 
 
-
 ## History
 
-When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the selfhosting bug. From this moment on, my requirements, experience, and setup evolved significantly, but not always in snyc. As it turns out, the requirements as a student with plenty of spare time and hardly any responsibilities were quite different to having a family and a day job thirteen years later.
+When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the self-hosting bug. From that moment on, my requirements, experience, and setup evolved significantly, though not always in sync. As it turns out, the needs of a student with plenty of spare time and hardly any responsibilities were quite different from having a family and a day job thirteen years later.
+
 As far as I recall, the milestones were the following:
 
 **Raspberry Pi with single 3.5" HDD and Raspbian on the SD-Card**
-Basically the vanilla setup, hosting SSH and NFS servers. SSH was reachable from the internet via DynDNS.  The few services it provided were installed from the OS repository and running as plain systemd services. Great for offloading data from my laptop's tiny SSD, but horribly unreliable since the SD-card kept failing every few weeks.
+This was basically the vanilla setup, hosting SSH and NFS servers. It was great for offloading data from my laptop’s tiny SSD, but it quickly became a lesson in maintenance hell. The system was horribly unreliable since the SD-card kept failing every few weeks.
 
 **Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card**
-I countered the failing SD-Cards by switching to Arch Linux ARM which at that time was able to mount the root file system read-only, significantly reducing SD Card wear and making the system immune to power outages. A first step towards minimizing maintenance.
+I countered the failing SD-Cards by switching to Arch Linux ARM, which at that time could mount the root file system read-only. This dramatically reduced SD Card wear and made the system immune to power outages. This was my first major step toward minimizing maintenance and building a reproducible system.
 
 **Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card with Docker**
-When the use cases and therefore the list of hosted services grew, I was facing two problems: 
-* First, every service is an additional attack vector, so i wanted to improve separation. 
-* Second, installing and setting up services, databases, etc. is tedious and boring. 
-
-At that time, Docker seemed a way out of configuration complexity while also improving isolation
+When my use cases and the list of hosted services grew, I faced two mounting problems: the need to improve service isolation to reduce the attack surface, and the tedious and boring chore of manually installing and setting up services and their dependencies. Docker seemed to be a way out of configuration complexity while also improving separation.
 
 **x86 mini-ITX server with RAID 1, CentOS and Docker**
-While the Raspberry Pi was great at that time, I was facing two issues:
-* The supply of pre-built container images for ARM was short, and building images on the Pi was slow
-* The single hard drive was a significant reliablility risk
-
-Hence, the next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1 and CentOS on an SSD. The hardware was more of a disruption than an evolution as it allowed for RAID 1, making the system much more reliable. With CentOS and Docker, I had a rock-solid OS that I had plenty of experience with from work. This one was a keeper; I hardly modified it for a few years, only swapping or adding a few containerized services now and then.
+The Raspberry Pi had hit a wall: the supply of pre-built ARM container images was short, and building them on the Pi was slow. More critically, the single hard drive was a significant reliability risk. The next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1 and CentOS on an SSD. This hardware finally allowed for RAID 1, making the system much more reliable. With CentOS and Docker, I had a rock-solid, familiar OS that was a keeper for a few years.
 
 **x86 mini-ITX server with RAID 1, CentOS and Podman**
-While containers are great, Docker has its issues. Running the Docker daemon as root is sub-par from a security POV and and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues with a traditional fork/exec model, tight systemd integration and the ability to run rootless containers, i.e. containers without privileged permisions.
+While containers were a huge win, Docker had its issues. Running the daemon as root was sub-par from a security perspective, and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues with a traditional fork/exec model, tight systemd integration, and the ability to run rootless containers-containers without privileged permissions. This was a massive security and simplicity upgrade.
 
 **x86 mini-ITX server with RAID 1, Fedora Atomic Host / Fedora CoreOS**
-While the last setup worked great, disadvantages were:
-* OS updates required manual intervention
-* The root file system was readable, so potential power outages could wreck my server. 
-
-The setup still felt more like a pet than cattle. Fedora Atomic Host and later Fedora CoreOS solved these issues by performing atomic updates, i.e. updateing the OS as a whole and enabling simpe roll-backs in case of problems. It also brought back the immutable root file system, offering better (not perfect) protection from power outages without the cost and complexity of a UPS. Overall, the setup lived up to the promise of a a secure, always  up-to-date and reliable system that could survive most power outages.
-
+Despite the last setup working great, it still had two disadvantages: OS updates required manual intervention, and the root file system was still writable, meaning power outages could still wreck the system. The setup still felt more like a pet than cattle. Fedora CoreOS solved these issues by performing atomic updates (updating the OS as a whole and enabling simple roll-backs) and bringing back the immutable root file system. This offered protection from power outages without the cost and added complexity of a UPS. It delivered on the promise of a secure, always up-to-date, and reliable system.
 
 **x86 mini-ITX server with RAID 1, openSUSE MicroOS**
-My only peevee with Fedora CoreOS was the slow updates due to ostree and that it broke and required manual intervention at both major OS verson upgrades i installed. Therefore, I was delighted to read the announcement of OpenSUSE MicroOS, which is basically an immutable container host system like Fedora CoreOS but with BTRFS instead of ostree and - tadaa -  a rolling release model! Without major OS release upgrades, the system has been absolutely rock solid for me. This is the setup I have been running since summer 2020.
-
+My only remaining peeve with Fedora CoreOS was the slow updates due to ostree and that it often broke and required manual intervention during major OS version upgrades. I was delighted to read the announcement of OpenSUSE MicroOS, an immutable container host system like Fedora CoreOS but with Btrfs instead of ostree and - tadaa - a rolling release model! Without major OS release upgrades, the system has been absolutely rock solid for me since summer 2020.
 
 ## Lessons Learned
 
