@@ -3,7 +3,7 @@ title = "From Hobby to Chore and Back in 13 years: My Low-Complexity Self-Hostin
 date = 2025-10-10
 +++
 
-When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the self-hosting bug. At that time, I was a student with ample spare time and few responsibilities. I viewed self-hosting as a way to reduce my dependency on the cloud (a.k.a. other people's computers) and take back ownership of my data, but most importantly, as a technology playground. Thirteen years later, I have a day job and a family. The server now runs crucial applications like home automation and provides services my extended family depends on. This creates a clear conflict: The demand for high availability clashes directly with my limited spare time to maintain it. For this core server, its raison d'être has shifted entirely from a playground to an essential, reliable utility. I can still keep my Raspberry Pis for fun and experimentation, but they are not part of anything crucial. Ultimately, I want to be the one to decide when I spend time on my hobby projects, not some mandatory update or software release schedule.
+When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the self-hosting bug. At that time, I was a student with ample spare time and few responsibilities. I viewed self-hosting as a way to reduce my dependency on the cloud (a.k.a. other people's computers) and take back ownership of my data, but most importantly, as a technology playground. Thirteen years later, I have a day job and a family. The server now runs crucial applications like home automation and provides services my extended family depends on. This creates a clear conflict: The demand for high availability clashes directly with my limited spare time to maintain it. For this core server, its raison d'être has shifted entirely from a playground to an essential, reliable utility. I can still keep my Raspberry Pis for fun and experimentation, but nobody but me notices when they break. Ultimately, I want to be the one to decide when I spend time on my hobby projects, not some mandatory update or software release schedule.
 
 My ultimate solution truly boils down to just one thing: reducing complexity. This article chronicles my thirteen-year journey chasing that singular goal, detailing the traps I fell into along the way. I'll give you a tour of my current  setup - a stack engineered specifically to eliminate maintenance chores: A mini-ITX server with almost no moving parts, PiKVM for dedicated out-of-band management, openSUSE MicroOS providing an immutable, auto-updating OS and Podman for secure, systemd-integrated rootless containers. This system is designed to run itself, not me.
 
@@ -11,9 +11,7 @@ My ultimate solution truly boils down to just one thing: reducing complexity. Th
 
 ## History
 
- From that moment on, my requirements, experience, and setup evolved significantly, though not always in sync. As it turns out, the needs of a student with plenty of spare time and hardly any responsibilities were quite different from having a family and a day job thirteen years later.
-
-As far as I recall, the milestones were the following:
+From the first Raspberry Pi on, my requirements, experience, and setup evolved significantly, though not always in sync. As far as I recall, the milestones were the following:
 
 **Raspberry Pi with single 3.5" HDD and Raspbian on the SD-Card**
 This was basically the vanilla setup, hosting SSH and NFS servers. It was great for offloading data from my laptop’s tiny SSD, but it quickly became a lesson in maintenance hell. The system was horribly unreliable since the SD-card kept failing every few weeks.
