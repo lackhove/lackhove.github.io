@@ -11,40 +11,38 @@ When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the 
 As far as I recall, the milestones were the following:
 
 **Raspberry Pi with single 3.5" HDD and Raspbian on the SD-Card**
-Basically the vanilla setup, hosting SSH and NFS servers. SSH was reachable from the internet via DynDNS. Great for offloading data from my laptop's tiny SSD, but horribly unreliable since the SD-card kept failing every few weeks.
+Basically the vanilla setup, hosting SSH and NFS servers. SSH was reachable from the internet via DynDNS.  The few services it provided were installed from the OS repository and running as plain systemd services. Great for offloading data from my laptop's tiny SSD, but horribly unreliable since the SD-card kept failing every few weeks.
 
 **Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card**
-I countered the failing SD-Cards by switching to Arch Linux ARM which at that time was able to mount the root file system read-only, significantly reducing SD Card wear and making the system immune to power outages. The few services it provided were installed from the OS repository and running as plain systemd services.
+I countered the failing SD-Cards by switching to Arch Linux ARM which at that time was able to mount the root file system read-only, significantly reducing SD Card wear and making the system immune to power outages. A first step towards minimizing maintenance.
 
 **Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card with Docker**
 When the use cases and therefore the list of hosted services grew, I was facing two problems: 
 * First, every service is an additional attack vector, so i wanted to improve separation. 
 * Second, installing and setting up services, databases, etc. is tedious and boring. 
 
-At that time, Docker seemed to address both issues.
+At that time, Docker seemed a way out of configuration complexity while also improving isolation
 
 **x86 mini-ITX server with RAID 1, CentOS and Docker**
-While the Raspberry Pi was great at that time, I was facing three issues:
-* The CPU was slow and the RAM was small
+While the Raspberry Pi was great at that time, I was facing two issues:
 * The supply of pre-built container images for ARM was short, and building images on the Pi was slow
-* The USB port was too slow to handle Ethernet and two hard drives—a dealbreaker for RAID 1
+* The single hard drive was a significant reliablility risk
 
 Hence, the next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1 and CentOS on an SSD. The hardware was more of a disruption than an evolution as it allowed for RAID 1, making the system much more reliable. With CentOS and Docker, I had a rock-solid OS that I had plenty of experience with from work. This one was a keeper; I hardly modified it for a few years, only swapping or adding a few containerized services now and then.
 
 **x86 mini-ITX server with RAID 1, CentOS and Podman**
-While containers are great, Docker has its issues. Running the Docker daemon as root is sub-par from a security POV and and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues. Admittedly, the transition wasn't as smooth as advertised, but first-class integration with systemd and the ability to run containers as non-root users were worth the trouble.
+While containers are great, Docker has its issues. Running the Docker daemon as root is sub-par from a security POV and and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues with a traditional fork/exec model, tight systemd integration and the ability to run rootless containers, i.e. containers without privileged permisions.
 
 **x86 mini-ITX server with RAID 1, Fedora Atomic Host / Fedora CoreOS**
 While the last setup worked great, disadvantages were:
 * OS updates required manual intervention
-* I still had some functionality (DynDns, Backups, etc.) running in the OS
-* The root file system was readable, so potential power outages could wreck my server (I dont want a UPS for several reasons, most importantly - added complexity).
+* The root file system was readable, so potential power outages could wreck my server. 
 
-The setup still felt more like a pet than cattle. Fedora Atomic Host and later Fedora CoreOS solved these issues by performing atomic updates, i.e. updateing the OS as a whole and enabling simpe roll-backs in case of problems and having an immutable root file system. Overall, the setup lived up to the promise of a a secure, always  up-to-date and reliable system that could survive most power outages.
+The setup still felt more like a pet than cattle. Fedora Atomic Host and later Fedora CoreOS solved these issues by performing atomic updates, i.e. updateing the OS as a whole and enabling simpe roll-backs in case of problems. It also brought back the immutable root file system, offering better (not perfect) protection from power outages without the cost and complexity of a UPS. Overall, the setup lived up to the promise of a a secure, always  up-to-date and reliable system that could survive most power outages.
 
 
 **x86 mini-ITX server with RAID 1, openSUSE MicroOS**
-My only peevee with Fedora CoreOS was the slow updates due to ostree and that it broke and required manual intervention at both major OS verson upgrades. I have had been running  Arch Linux (I use Arch btw) on my laptop for a few years now and have come to the conclusion that rolling-release distros can avoid this issue without sacrificing stability. I was delighted to read the announcement of OpenSUSE MicroOS, which is basically an immutable container host system like Fedora CoreOS but with BTFS instead of ostree and most importantly a rolling release model. Without major OS release upgrades, the system has been absolutely rock solid for me. This is the setup I have been running since summer 2020.
+My only peevee with Fedora CoreOS was the slow updates due to ostree and that it broke and required manual intervention at both major OS verson upgrades i installed. Therefore, I was delighted to read the announcement of OpenSUSE MicroOS, which is basically an immutable container host system like Fedora CoreOS but with BTRFS instead of ostree and - tadaa -  a rolling release model! Without major OS release upgrades, the system has been absolutely rock solid for me. This is the setup I have been running since summer 2020.
 
 
 ## Lessons Learned
