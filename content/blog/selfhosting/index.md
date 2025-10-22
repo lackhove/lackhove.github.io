@@ -1,37 +1,50 @@
 +++
-title = "Low Complexity Selfhosting"
+title = "From Hobby to Chore and Back in 13 years: My Low-Complexity Self-Hosting Stack with OpenSUSE MicroOS and Podman Rootless Containers"
 date = 2025-10-10
 +++
 
+
+
 ## History
 
-When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the selfhosting bug. From this moment on, my requirements, experience, and setup evolved simultaneously. As far as I recall, the milestones were the following:
+When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the selfhosting bug. From this moment on, my requirements, experience, and setup evolved significantly, but not always in snyc. As it turns out, the requirements as a student with plenty of spare time and hardly any responsibilities were quite different to having a family and a day job thirteen years later.
+As far as I recall, the milestones were the following:
 
-#### Raspberry Pi with single 3.5" HDD and Raspbian on the SD-Card
+**Raspberry Pi with single 3.5" HDD and Raspbian on the SD-Card**
 Basically the vanilla setup, hosting SSH and NFS servers. SSH was reachable from the internet via DynDNS. Great for offloading data from my laptop's tiny SSD, but horribly unreliable since the SD-card kept failing every few weeks.
 
-#### Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card
-At some point, Arch Linux-ARM gained a feature which allowed mounting the root system read-only and a handful of tmpfs mounts. The few services it provided were installed from the OS repository and running as plain systemd services. This was pretty solid and, better yet, very robust to power outages.
+**Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card**
+I countered the failing SD-Cards by switching to Arch Linux ARM which at that time was able to mount the root file system read-only, significantly reducing SD Card wear and making the system immune to power outages. The few services it provided were installed from the OS repository and running as plain systemd services.
 
-#### Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card with Docker
-When the use cases and therefore the list of hosted services grew, I was facing two problems: First, every service is an additional attack vector, so separating them as much as possible is probably a good idea. Second, installing and setting up services, databases, etc. is tedious and boring. At that time, Docker seemed to address both issues. Sure, from a security perspective, containers can't provide full-blown isolation, but it still beats running everything with root permissions on the same host.
+**Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card with Docker**
+When the use cases and therefore the list of hosted services grew, I was facing two problems: 
+* First, every service is an additional attack vector, so i wanted to improve separation. 
+* Second, installing and setting up services, databases, etc. is tedious and boring. 
 
-#### x86 mini-ITX server with RAID 1, CentOS and Docker
+At that time, Docker seemed to address both issues.
+
+**x86 mini-ITX server with RAID 1, CentOS and Docker**
 While the Raspberry Pi was great at that time, I was facing three issues:
 * The CPU was slow and the RAM was small
 * The supply of pre-built container images for ARM was short, and building images on the Pi was slow
 * The USB port was too slow to handle Ethernet and two hard drives—a dealbreaker for RAID 1
 
-Hence, the next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1, and CentOS on an SSD. The hardware was more of a disruption than an evolution; the RAID 1 made the system much more reliable. With CentOS and Docker, I had a rock-solid OS that I had plenty of experience with from work. This one was a keeper; I hardly modified it for a few years, only swapping or adding a few containerized services now and then.
+Hence, the next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1 and CentOS on an SSD. The hardware was more of a disruption than an evolution as it allowed for RAID 1, making the system much more reliable. With CentOS and Docker, I had a rock-solid OS that I had plenty of experience with from work. This one was a keeper; I hardly modified it for a few years, only swapping or adding a few containerized services now and then.
 
-#### x86 mini-ITX server with RAID 1, CentOS and Podman
-While containers are great, Docker has its issues. Running the Docker daemon as root and the lacking integration with the underlying OS felt like the implementation wasn't using its full potential. Podman came along. Admittedly, the transition wasn't as smooth as advertised (IPv6 gave me quite a few headaches, but more on that later), but first-class integration with systemd and the ability to run containers as non-root users were worth the trouble.
+**x86 mini-ITX server with RAID 1, CentOS and Podman**
+While containers are great, Docker has its issues. Running the Docker daemon as root is sub-par from a security POV and and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues. Admittedly, the transition wasn't as smooth as advertised, but first-class integration with systemd and the ability to run containers as non-root users were worth the trouble.
 
-#### x86 mini-ITX server with RAID 1, Fedora Atomic Host / Fedora CoreOS
-While the last setup worked great, keeping the host OS up to date, manually fixing issues, and wondering how fast I could really restore the system after a catastrophic failure seemed more like having a server as a pet than as cattle. Fedora Atomic Host and later Fedora CoreOS solved these issues by having immutable root file systems and performing atomic updates, promising a secure system that could be safely and automatically updated at short intervals. The promise was mostly kept, except for major distro version upgrades.
+**x86 mini-ITX server with RAID 1, Fedora Atomic Host / Fedora CoreOS**
+While the last setup worked great, disadvantages were:
+* OS updates required manual intervention
+* I still had some functionality (DynDns, Backups, etc.) running in the OS
+* The root file system was readable, so potential power outages could wreck my server (I dont want a UPS for several reasons, most importantly - added complexity).
 
-#### x86 mini-ITX server with RAID 1, openSUSE MicroOS
-openSUSE was a little late to the immutable container host OS party, but MicroOS combines the best of my then-favorite operating systems: the minimalism and immutability of Fedora CoreOS and the rolling release model of Arch Linux (I use Arch btw). Without major OS release upgrades, the system has been absolutely rock solid for me. This is the setup I have been running since summer 2020.
+The setup still felt more like a pet than cattle. Fedora Atomic Host and later Fedora CoreOS solved these issues by performing atomic updates, i.e. updateing the OS as a whole and enabling simpe roll-backs in case of problems and having an immutable root file system. Overall, the setup lived up to the promise of a a secure, always  up-to-date and reliable system that could survive most power outages.
+
+
+**x86 mini-ITX server with RAID 1, openSUSE MicroOS**
+My only peevee with Fedora CoreOS was the slow updates due to ostree and that it broke and required manual intervention at both major OS verson upgrades. I have had been running  Arch Linux (I use Arch btw) on my laptop for a few years now and have come to the conclusion that rolling-release distros can avoid this issue without sacrificing stability. I was delighted to read the announcement of OpenSUSE MicroOS, which is basically an immutable container host system like Fedora CoreOS but with BTFS instead of ostree and most importantly a rolling release model. Without major OS release upgrades, the system has been absolutely rock solid for me. This is the setup I have been running since summer 2020.
 
 
 ## Lessons Learned
