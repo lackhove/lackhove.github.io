@@ -3,10 +3,15 @@ title = "From Hobby to Chore and Back in 13 years: My Low-Complexity Self-Hostin
 date = 2025-10-10
 +++
 
+When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the self-hosting bug. At that time, I was a student with ample spare time and few responsibilities. I viewed self-hosting as a way to reduce my dependency on the cloud (a.k.a. other people's computers) and take back ownership of my data, but most importantly, as a technology playground. Thirteen years later, I have a day job and a family. The server now runs crucial applications like home automation and provides services my extended family depends on. This creates a clear conflict: The demand for high availability clashes directly with my limited spare time to maintain it. For this core server, its raison d'être has shifted entirely from a playground to an essential, reliable utility. I can still keep my Raspberry Pis for fun and experimentation, but they are not part of anything crucial. Ultimately, I want to be the one to decide when I spend time on my hobby projects, not some mandatory update or software release schedule.
+
+My ultimate solution truly boils down to just one thing: reducing complexity. This article chronicles my thirteen-year journey chasing that singular goal, detailing the traps I fell into along the way. I'll give you a tour of my current  setup - a stack engineered specifically to eliminate maintenance chores: A mini-ITX server with almost no moving parts, PiKVM for dedicated out-of-band management, openSUSE MicroOS providing an immutable, auto-updating OS and Podman for secure, systemd-integrated rootless containers. This system is designed to run itself, not me.
+
+
 
 ## History
 
-When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the self-hosting bug. From that moment on, my requirements, experience, and setup evolved significantly, though not always in sync. As it turns out, the needs of a student with plenty of spare time and hardly any responsibilities were quite different from having a family and a day job thirteen years later.
+ From that moment on, my requirements, experience, and setup evolved significantly, though not always in sync. As it turns out, the needs of a student with plenty of spare time and hardly any responsibilities were quite different from having a family and a day job thirteen years later.
 
 As far as I recall, the milestones were the following:
 
@@ -23,15 +28,17 @@ When my use cases and the list of hosted services grew, I faced two mounting pro
 The Raspberry Pi had hit a wall: the supply of pre-built ARM container images was short, and building them on the Pi was slow. More critically, the single hard drive was a significant reliability risk. The next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1 and CentOS on an SSD. This hardware finally allowed for RAID 1, making the system much more reliable. With CentOS and Docker, I had a rock-solid, familiar OS that was a keeper for a few years.
 
 **x86 mini-ITX server with RAID 1, CentOS and Podman**
-While containers were a huge win, Docker had its issues. Running the daemon as root was sub-par from a security perspective, and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues with a traditional fork/exec model, tight systemd integration, and the ability to run rootless containers-containers without privileged permissions. This was a massive security and simplicity upgrade.
+While containers were a huge win, Docker had its issues. Running the daemon as root was sub-par from a security perspective, and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues with a traditional fork/exec model, tight systemd integration, and the ability to run rootless containers—containers without privileged permissions. This was a massive security and simplicity upgrade.
 
 **x86 mini-ITX server with RAID 1, Fedora Atomic Host / Fedora CoreOS**
 Despite the last setup working great, it still had two disadvantages: OS updates required manual intervention, and the root file system was still writable, meaning power outages could still wreck the system. The setup still felt more like a pet than cattle. Fedora CoreOS solved these issues by performing atomic updates (updating the OS as a whole and enabling simple roll-backs) and bringing back the immutable root file system. This offered protection from power outages without the cost and added complexity of a UPS. It delivered on the promise of a secure, always up-to-date, and reliable system.
 
 **x86 mini-ITX server with RAID 1, openSUSE MicroOS**
-My only remaining peeve with Fedora CoreOS was the slow updates due to ostree and that it often broke and required manual intervention during major OS version upgrades. I was delighted to read the announcement of OpenSUSE MicroOS, an immutable container host system like Fedora CoreOS but with Btrfs instead of ostree and - tadaa - a rolling release model! Without major OS release upgrades, the system has been absolutely rock solid for me since summer 2020.
+My only remaining peeve with Fedora CoreOS was the slow updates due to `ostree` and that it often broke and required manual intervention during major OS version upgrades. I realized a rolling-release distro could avoid this particular complexity chore. I was delighted to discover openSUSE MicroOS, an immutable container host system like Fedora CoreOS but with Btrfs instead of `ostree` and—tadaa—a rolling release model! Without major OS release upgrades, the system has been absolutely rock solid for me since summer 2020.
 
 ## Lessons Learned
+
+<!-- Every additional piece of hardware, daemon, container, service, or configuration file drastically increases your cognitive load and the likelihood of frustrating late-night issues. -->
 
 The main thing I learned in 13 years of self-hosting is that when moving from hosting a simple file server for yourself to a range of critical services for family and friends, the top priorities should be reliability and simplicity. You really don't want to start debugging your Kubernetes setup when an update made the living room lights go haywire on Christmas Eve. My current setup is heavily designed to:
 
