@@ -5,13 +5,13 @@ date = 2025-10-10
 
 When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the self-hosting bug. At that time, I was a student with ample spare time and few responsibilities. I viewed self-hosting as a way to reduce my dependency on the cloud (a.k.a. other people's computers) and take back ownership of my data, but most importantly, as a technology playground. Thirteen years later, I have a day job and a family. The server now runs crucial applications like home automation and provides services my extended family depends on. This creates a clear conflict: The demand for high availability clashes directly with my limited spare time to maintain it. For this core server, its raison d'être has shifted entirely from a playground to an essential, reliable utility. I can still keep my Raspberry Pis for fun and experimentation, but nobody but me notices when they break. Ultimately, I want to be the one to decide when I spend time on my hobby projects, not some mandatory update or software release schedule.
 
-My ultimate solution truly boils down to just one thing: reducing complexity. This article chronicles my thirteen-year journey chasing that singular goal, detailing the traps I fell into along the way. I'll give you a tour of my current  setup - a stack engineered specifically to eliminate maintenance chores: A mini-ITX server with almost no moving parts, PiKVM for dedicated out-of-band management, openSUSE MicroOS providing an immutable, auto-updating OS and Podman for secure, systemd-integrated rootless containers. This system is designed to run itself, not me.
+My ultimate solution truly boils down to just one thing: reducing complexity. This article chronicles my thirteen-year journey chasing that singular goal, detailing the traps I fell into along the way. I'll give you a tour of my current  setup: A mini-ITX server with minimal moving parts, PiKVM for dedicated out-of-band management, openSUSE MicroOS providing an immutable, auto-updating OS and Podman for secure, systemd-integrated rootless containers.
 
 
 
 ## History
 
-From the first Raspberry Pi on, my requirements, experience, and setup evolved significantly, though not always in sync. As far as I recall, the milestones were the following:
+From the first Raspberry Pi on, my requirements, experience and setup evolved significantly, though not always in sync. As far as I recall, the milestones were the following:
 
 **Raspberry Pi with single 3.5" HDD and Raspbian on the SD-Card**
 This was basically the vanilla setup, hosting SSH and NFS servers. It was great for offloading data from my laptop’s tiny SSD, but it quickly became a lesson in maintenance hell. The system was horribly unreliable since the SD-card kept failing every few weeks.
@@ -20,16 +20,16 @@ This was basically the vanilla setup, hosting SSH and NFS servers. It was great 
 I countered the failing SD-Cards by switching to Arch Linux ARM, which at that time could mount the root file system read-only. This dramatically reduced SD Card wear and made the system immune to power outages. This was my first major step toward minimizing maintenance and building a reproducible system.
 
 **Raspberry Pi with single 3.5" HDD and Arch Linux-ARM on a read-only SD-Card with Docker**
-When my use cases and the list of hosted services grew, I faced two mounting problems: the need to improve service isolation to reduce the attack surface, and the tedious and boring chore of manually installing and setting up services and their dependencies. Docker seemed to be a way out of configuration complexity while also improving separation.
+When my use cases and the list of hosted services grew, I faced two mounting problems: the need to improve service isolation to reduce the attack surface and the tedious and boring chore of manually installing and setting up services and their dependencies. Docker seemed to be a way out of configuration complexity while also improving separation.
 
 **x86 mini-ITX server with RAID 1, CentOS and Docker**
-The Raspberry Pi had hit a wall: the supply of pre-built ARM container images was short, and building them on the Pi was slow. More critically, the single hard drive was a significant reliability risk. The next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1 and CentOS on an SSD. This hardware finally allowed for RAID 1, making the system much more reliable. With CentOS and Docker, I had a rock-solid, familiar OS that was a keeper for a few years.
+The Raspberry Pi had hit a wall: the supply of pre-built ARM container images was short and building them on the Pi was slow. More critically, the single hard drive was a significant reliability risk. The next evolution was an ASRock mini-ITX board with an Intel N3150 CPU, two 3.5" HDDs in a RAID 1 and CentOS on an SSD. This hardware finally allowed for RAID 1, making the system much more reliable. With CentOS and Docker, I had a very solid, familiar OS that was a keeper for a few years.
 
 **x86 mini-ITX server with RAID 1, CentOS and Podman**
-While containers were a huge win, Docker had its issues. Running the daemon as root was sub-par from a security perspective, and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues with a traditional fork/exec model, tight systemd integration, and the ability to run rootless containers—containers without privileged permissions. This was a massive security and simplicity upgrade.
+While containers were a huge win, Docker had its issues. Running the daemon as root was sub-par from a security perspective and the lacking integration with the underlying OS made management cumbersome. Then Podman came along, solving both issues with a traditional fork/exec model, tight systemd integration and the ability to run rootless containers—containers without privileged permissions. This was a massive security and simplicity upgrade.
 
 **x86 mini-ITX server with RAID 1, Fedora Atomic Host / Fedora CoreOS**
-Despite the last setup working great, it still had two disadvantages: OS updates required manual intervention, and the root file system was still writable, meaning power outages could still wreck the system. The setup still felt more like a pet than cattle. Fedora CoreOS solved these issues by performing atomic updates (updating the OS as a whole and enabling simple roll-backs) and bringing back the immutable root file system. This offered protection from power outages without the cost and added complexity of a UPS. It delivered on the promise of a secure, always up-to-date, and reliable system.
+Despite the last setup working great, it still had two disadvantages: OS updates required manual intervention and the root file system was still writable, meaning power outages could still wreck the system. The setup still felt more like a pet than cattle. Fedora CoreOS solved these issues by performing atomic updates (updating the OS as a whole and enabling simple roll-backs) and bringing back the immutable root file system. This offered protection from power outages without the cost and added complexity of a UPS. It delivered on the promise of a secure, always up-to-date and reliable system.
 
 **x86 mini-ITX server with RAID 1, openSUSE MicroOS**
 My only remaining peeve with Fedora CoreOS was the slow updates due to `ostree` and that it often broke and required manual intervention during major OS version upgrades. I realized a rolling-release distro could avoid this particular complexity chore. I was delighted to discover openSUSE MicroOS, an immutable container host system like Fedora CoreOS but with Btrfs instead of `ostree` and—tadaa—a rolling release model! Without major OS release upgrades, the system has been absolutely rock solid for me since summer 2020.
@@ -37,156 +37,58 @@ My only remaining peeve with Fedora CoreOS was the slow updates due to `ostree` 
 
 ## If It's Complicated, It's a Chore
 
-The main thing I learned in 13 years of self-hosting is that when moving from hosting a simple file server for yourself to a range of critical services for family and friends, the top priority is reducing complexity. Every additional piece of hardware, daemon, container, service, or even configuration file  increases your the cognitive load and the likelyhood of failures, issues and security risks. Or to put it more graphic: You really don't want to start debugging your Kubernetes setup when an update made the living room lights go haywire on Christmas Eve. 
+The main thing I learned in 13 years of self-hosting is that when moving from hosting a simple file server for yourself to a range of critical services for family and friends, the top priority is reducing complexity. Every additional piece of hardware, daemon, container, service, or even configuration file increases your cognitive load and the likelihood of failures, issues and security risks. Or to put it more graphic: You really don't want to start debugging your Kubernetes setup when an update made the living room lights go haywire on Christmas Eve.
 
-Reducing complexity gives me the benefits of (in no particular order):
+Committing to reducing complexity gives me the following essential benefits:
 
-* **Almost no maintenance:** I cant remember when i had to log on to the server to do some chores. Thanks to OpenSUSE MicroOS's transactional updates and Podman's auto-updating containers, the entire stack is always current and even automatically rolls back if a bad update breaks something.
+* **Zero-Touch Maintenance:** I can barely remember the last time I had to log in to perform chores. Thanks to OpenSUSE MicroOS's transactional updates and Podman's auto-updating containers, the entire stack is always current and even automatically rolls back if a bad update breaks something.
 
-* **Inherent security:** By keeping the system and containers up to date, maintaining a minimal host environment and exposing only whats necessary, the attack surface is drastically minimized. If a contaienr is breached, the the impact is minimized by SELinux, rootless Podman containers and having a minimal, immutable  host OS.
+* **Inherent Security by Design:** By keeping the system minimal, up-to-date and exposing only what's necessary, the attack surface is drastically minimized. If a container is breached, the impact is (hopefully) contained by SELinux, rootless Podman containers and having a minimal, immutable host OS.
 
-* **Reduced Cognitive Load**: I log on to my server every few months, so I can't rely on remembering complex service configurations. By deliberately avoiding layers like hypervisors (Proxmox), orchestration (Kubernetes/Ansible), and management GUIs (Portainer), the infrastructure is defined by simple systemd units and human-readable config files. Simple solutions are always easier to debug when you're under pressure.
+* **Minimized Points of Failure:** Fewer moving parts means fewer things that might break. I deliberately chose not to use layers like hypervisors (Proxmox), orchestration (Kubernetes/Ansible), or container management GUIs (Portainer). My stack is simply a minimal, immutable bare metal OS running Podman containers. This core simplicity prevents failures and makes diagnosing any issues straightforward.
 
-* **Swift Disaster Recovery:** Failure is inevitable, so my goal is to minimizie its impact. Thanks to the atomic updates and snaphots, I can recover the entire host operating system to a known good state with a single command. Moreover, the system is simple enough to be restored on new hardware from a backup with rsync.
+* **Reduced Cognitive Load:** I log on to my server every few months, so the KISSprinciple is law. Since I've avoided complex layers, my entire infrastructure is defined by simple systemd units and human-readable configuration files. Simple solutions are always easier to debug when you're under pressure.
 
-* **Minimized Points of Failure:** Fewer moving parts means fewer parts that might break. I decided against using hypervisors such as Proxmox, IaaS systems such as Ansible, orchestration such as Kubernetes, and container management tools such as Portainer. Just a minimal, immutable bare metal OS and a bunch of rootless Podman containers. This simplicity removes points of failures and makes diagnosing issues straightforward.
-
-
+* **Swift Disaster Recovery:** Failure is inevitable, so my goal is to minimize its impact. Thanks to the atomic updates and Btrfs snapshots, I can recover the entire host OS to a known good state with a single command. Moreover, the stack's inherent simplicity allows the system to be restored on new hardware from a basic backup using tools like `rsync`, avoiding the complexity of dedicated IaaS tools.
 
 
 
-## The Setup
+
+## My Low-Complexity Self-Hosting Stack
 
 ### Level 0: The Hardware
 
-As mentioned earlier, the hardware is a mini-ITX server with an Intel N100 low-power CPU, a cheap SSD, and two 3.5" HDDs. What I like about the ASUS motherboard is that it doesn't have a fan, so one less mechanical part that might fail. The more interesting part is the [PiKVM](https://pikvm.org/) attached to the server, which gives me full control of the system, even on the road: I can push the power and reset buttons, see the screen, access the BIOS, and even virtually plug ISO images into the USB drive. In my case, this has several advantages compared to, e.g., virtualization platforms:
-
-* I have full access to the system, even when powered off and before boot
-* The server can operate without the PiKVM, so a failure doesn't bring the whole system down
+As mentioned earlier, the hardware is a mini-ITX server with an Intel N100 low-power CPU and a cheap SSD for the OS. The most interesting part is what the system doesnt have: a fan. The only mechanical parts that will fail are the two 3.5" HDDs, which are redundant as RAID1.
+The OS is installed on bare metal, so no complexity is added by a hypervisor. Instead, there is a [PiKVM](https://pikvm.org/) attached to the server, which gives me full control of the hardware, independent of the OS:
+* If the OS fails to boot or an hardware error occurs, I can still access the BIOS, push power and reset buttons and virtually plug in recovery ISOs from anywhere.
 * The PiKVM is only accessible from within my home network (or Wireguard when not at home), so one less attack vector I need to worry about
-* It's absolutely robust and low-maintenance with a read-only file system and hardly any configuration.
+* The server can operate without the PiKVM, so this adds zero complexity to the stack.
+
 
 ### Level 1: The Operating System
 
-#### Basic setup
+The feature i like most about OpenSUSE MicroOS is probably, that i dont have to think about it at all. The OS is immutable and updates are installed by just rebooting into a new BTRFS snapshot. When something goes wrong, the it just reboots into the last working snapshot. However, this has never happened to me. MicroOS has a rolling release model, so there are no major upgrades that might break stuff. And with the very few packages it ships, chances for breakages are extremely low anyways.
 
-After installation, the system can be configured like any other container Linux OS. However, with its transactional nature, most changes will only be applied after a reboot or:
+Speaking of few packages: I have only added the bare minimum to the default list, such as vim and tmux. I also limted the configuration to the basic essentials such as keyboard layout, time zone, SSH, mounts etc. and mdadm email notifications, which I haven't containerized yet.
+Everything else goes into containers. 
 
-```bash
-$ transactional-update apply
-```
-
-This command switches into the next snapshot immediately. You should also apply this command after each alteration to the current snapshot, because new snapshots are always derived from the current one, overwriting changes made to the next one in line. Installing packages (also with `transactional-update`) will automatically create a new snapshot, so going back to the current, working state is as easy as selecting a different snapshot at boot or running `transactional-update rollback`.
-
-Since I am trying to minimize complexity here, I try to only configure the most basic stuff, such as:
-
-* timezone, keyboard, and locale
-* SSH setup with `PermitRootLogin without-password`
-* additional file system mounts
-* mail and mdadm notifications (I haven't found a good container for this task yet)
-
-Everything else should go into a container. For sysadmin tasks, openSUSE recommends using distrobox (which I've never used, though).
-
-Did I mention the key feature of MicroOS was reliable, automatic updates? These must be enabled manually via:
-
+The key feature of MicroOS,  reliable, automatic updates must be enabled manually via:
 ```bash
 $ systemctl enable --now transactional-update.timer
 ```
+and the desired reboot interval must be set in `/etc/systemd/system/transactional-update.timer.d/local.conf` and method in `/etc/transactional-update.conf`. I opted for daily and `REBOOT_METHOD=systemd`, since it's the simplest.
 
-Set the desired reboot interval in `/etc/systemd/system/transactional-update.timer.d/local.conf` and method in `/etc/transactional-update.conf`. I opted for daily and `REBOOT_METHOD=systemd`, since it's the simplest. The system can even determine whether it's healthy and will trigger a rollback automatically if not. In all those years, I've never had to do a manual rollback.
+With this minimal setup, restoring the OS is only a matter of restoring the `/etc` and the container data dirs and installing the additional packages. No complex orchestration tools such as Ansible, Salt, Puppet, etc. required.
 
-Since the base system is so simple, there is no need for complex orchestration tools (Ansible, Salt, Puppet, etc.). All relevant configuration is included in the output of:
 
-```bash
-$ zypper packages --userinstalled
-```
 
-This lists all manually installed packages and the content of the `/etc` directory. Both can be backed up and restored easily.
+### Level 2: Podman
 
-#### Podman base setup
 
-Most functionality is implemented in dedicated containers, so we need to set up Podman properly. The OS comes with reasonable defaults, but for my use case, I want to keep all images up to date automatically. Podman already ships the required features, which are enabled by:
+Thanks to Podman first class systemd integration, all i need to manage my container lifecycle is systemd. So again, no need for container management or orchestration systems such as Docker Compose or Kubernetes that add complexity to the stack. Instead, the whole system can be managed with a handful of simple tools, i.e. `systemctl` and `journalctl`. With the integration of Quadlet into Podman, i don't even need to manually write, manage and update systemd units anymore. Instead, all my containers are managed via simple INI files in `/etc/containers/systemd`. The corresponding systemd unit files are created at boot (or `systemctl --user daemon-reload`), and even the user's containers are managed right in the `/etc` directory at `/etc/containers/systemd/users/<uid>/`, which further simplifies backup and restore. A simple example would be:
 
-```bash
-$ systemctl enable --now podman-auto-update.timer
-```
-
-This will produce lots of unused images, which we can automatically clean up by adding custom units:
-
-```ini
-# /etc/systemd/system/podman-prune.service
-[Unit]
-Description=Podman prune service
-Wants=network.target
-After=network-online.target
-
-[Service]
-ExecStart=/usr/bin/podman system prune -a --volumes -f
-
-[Install]
-WantedBy=multi-user.target default.target
-```
-
-and:
-
-```ini
-# /etc/systemd/system/podman-prune.timer
-[Unit]
-Description=Podman prune timer
-
-[Timer]
-OnCalendar=weekly
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-
-These can be enabled with:
-
-```bash
-$ systemctl daemon-reload
-$ systemctl enable --now podman-prune.timer
-```
-
-Since we want to run most services rootless, we also need to set up our (system) user. Since I want to be able to login and look around, I created a normal user with UID 1000:
-
-```bash
-$ useradd --add-subids-for-system -u 1000 zonk
-```
-
-We then make the Podman maintenance tasks available to users with:
-
-```bash
-$ cp /usr/lib/systemd/system/podman-auto-update.* /etc/systemd/user
-$ cp /etc/systemd/system/podman-prune.* /etc/systemd/user
-```
-
-After logging in as the new user, we first want to make sure they can run systemd services in the background:
-
-```bash
-$ su zonk
-$ loginctl enable-linger $USER
-```
-
-and enable our two Podman tasks:
-
-```bash
-$ systemctl --user daemon-reload
-$ systemctl --user enable --now podman-auto-update.timer
-$ systemctl --user enable --now podman-prune.timer
-```
-
-Now we are ready to add our first container.
-
-### Level 2: Containers
-
-#### Basic setup
-
-With Podman, all we need to manage our container lifecycle is systemd, so again, no need for complex container management or orchestration systems such as Docker Compose or Kubernetes. Since the integration of Quadlet into Podman, we don't even need to manually write, manage, and update systemd units anymore. Instead, all our containers are managed via simple INI files in `/etc/containers/systemd`. The corresponding systemd unit files are created at boot (or `systemctl --user daemon-reload`), and even the user's containers are managed right in the `/etc` directory, which further simplifies backup and restore. A simple example would be:
-
-```ini
-# /etc/containers/systemd/users/1000/mosquitto.container
+ ```ini
+# /etc/containers/systemd/users/<uid>/mosquitto.container
 [Service]
 Restart=on-failure
 TimeoutStopSec=70
@@ -205,129 +107,117 @@ Volume=/var/lib/docker-confs/mosquitto/log:/mosquitto/log/:Z,U
 WantedBy=default.target
 ```
 
-Isn't that beautiful? Here I defined that, among other things, the container image should be auto-updated by our `podman-auto-update` service, publish ports, and mount volumes with correct SELinux labels and auto-adjusted permissions.
+Isn't that beautiful? Here I defined that, among other things, the container image should be auto-updated (see below), publish ports, and mount volumes with correct SELinux labels and auto-adjusted permissions.
 
-For multi-container applications, we can leverage Podman's pods, which basically allow network communication between containers over localhost ports, saving us from the complexity of container networks. [Karakeep](https://karakeep.app/), for instance, requires a Chrome and a Meilisearch container in addition to the application itself. So for this, I have the following container files:
+
+#### Auto-updates
+
+As with the OS Updates, automatic container updates are disabled by default. Activating them is as easy as enabling the `podman-auto-update.timer` unit. However, this will produce lots of unused images, so i created these two small units to clean up unues images / conatiners periodically:
+```ini
+# /etc/systemd/system/podman-prune.service
+[Unit]
+Description=Podman prune service
+Wants=network.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/podman system prune -a --volumes -f
+
+[Install]
+WantedBy=multi-user.target default.target
+```
+and:
+```ini
+# /etc/systemd/system/podman-prune.timer
+[Unit]
+Description=Podman prune timer
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+#### Pods instead of Compose-Files
+
+For multi-container applications, we can leverage Podman's pods, which basically allow network communication between containers over localhost ports, sparing me the complexity of container networks. [Paperless-ngx](https://docs.paperless-ngx.com/), for instance, requires a redis container in addition to the application itself. So for this, I have the following container files:
 
 ```ini
-# /etc/containers/systemd/users/1000/karakeep-chrome.container
+# paperlessngx-redis.container
 [Service]
 Restart=on-failure
 TimeoutStopSec=70
 
 [Container]
-Pod=karakeep.pod
-ContainerName=karakeep-chrome
+ContainerName=paperlessngx-redis
+Pod=paperlessngx.pod
+Image=docker.io/redis:8
 AutoUpdate=image
-Image=gcr.io/zenika-hub/alpine-chrome:123
-Exec=--no-sandbox --disable-gpu --disable-dev-shm-usage '--remote-debugging-address=0.0.0.0' '--remote-debugging-port=9222' --hide-scrollbars
-Environment=KARAKEEP_VERSION=release
 ```
-
 ```ini
-# /etc/containers/systemd/users/1000/karakeep-meilisearch.container
+# paperlessngx-web.container
 [Service]
 Restart=on-failure
 TimeoutStopSec=70
 
 [Container]
-Environment=MEILI_NO_ANALYTICS=true
-Image=docker.io/getmeili/meilisearch:v1.11.1
+ContainerName=paperlessngx-web
+Pod=paperlessngx.pod
+Image=ghcr.io/paperless-ngx/paperless-ngx:latest
 AutoUpdate=image
-Pod=karakeep.pod
-ContainerName=karakeep-meilisearch
-Volume=/var/lib/docker-confs/karakeep/meilisearch:/meili_data:Z
+Volume=/var/lib/docker-confs/paperless-ngx/data:/usr/src/paperless/data:Z,U
+Volume=/var/lib/docker-confs/paperless-ngx/media:/usr/src/paperless/media:Z,U
+Volume=/var/lib/docker-confs/paperless-ngx/export:/usr/src/paperless/export:Z,U
+Environment=PAPERLESS_REDIS=redis://localhost:6379 PAPERLESS_SECRET_KEY=<redacted> PAPERLESS_TIME_ZONE=Europe/Berlin PAPERLESS_OCR_MODE=skip_noarchive PAPERLESS_OCR_LANGUAGE=deu PAPERLESS_FILENAME_FORMAT={created_year}/{correspondent}/{title} PAPERLESS_FORCE_SCRIPT_NAME=/paperless
 ```
-
+and a pod file, tying it all together:
 ```ini
-# /etc/containers/systemd/users/1000/karakeep-web.container
-[Service]
-Restart=on-failure
-TimeoutStopSec=70
-
-[Container]
-Environment=MEILI_ADDR=http://localhost:7700 BROWSER_WEB_URL=http://localhost:9222 DATA_DIR=/data KARAKEEP_VERSION=release NEXTAUTH_SECRET=<redacted> DISABLE_SIGNUPS=true MEILI_MASTER_KEY=<redacted> NEXTAUTH_URL=<redacted> OPENAI_API_KEY=<redacted>
-Image=ghcr.io/karakeep-app/karakeep:release
-Pod=karakeep.pod
-ContainerName=karakeep-web
-AutoUpdate=image
-Volume=/var/lib/docker-confs/karakeep/data:/data:Z
-```
-
-and a pod file, tying it all together at `/etc/containers/systemd/users/1000/karakeep.pod` with:
-
-```ini
+# paperlessngx.pod
 [Pod]
-PublishPort=8012:3000
+PublishPort=10.88.0.1:8000:8000
 
 [Install]
 WantedBy=default.target
 ```
 
-Like most applications, Karakeep only has a Docker Compose file in its documentation. Instead of manually converting these to plain old Podman Quadlet files, we can leverage [Podlet](https://github.com/containers/podlet), which can "convert a (Docker) Compose file to a Quadlet .pod file and .container files." The resulting files require minimal adjustments to include, e.g., the right hostnames and auto-updating.
-
-#### Web Access
-
-An application such as Karakeep should be accessible from the internet, so we need a reverse proxy. I prefer [Traefik](https://doc.traefik.io/traefik/) for its excellent documentation and simple setup (yes, you read that right). Mixing reverse proxy and container configs by adding container labels is not for me, so I just went with an old-school Traefik config:
-
-```yaml
-# /var/lib/docker-confs/traefik/traefik.yml
-providers:
-  file:
-    directory: /etc/traefik/dynamic/
-
-entryPoints:
-  web:
-    address: ":80"
-    transport:
-      respondingTimeouts:
-        readTimeout: 600
-  websecure:
-    address: ":443"
-    transport:
-      respondingTimeouts:
-        readTimeout: 600
-
-certificatesResolvers:
-  letsencrypt:
-    acme:
-      email: <redacted>
-      storage: /etc/traefik/acme.json
-      httpChallenge:
-        entryPoint: web
+Like most applications, Paperless-ngx only has a Docker Compose file in its documentation. Instead of manually converting these to plain old Podman Quadlet files, we can leverage [Podlet](https://github.com/containers/podlet), which can convert docker-compose-files to podman .container and .pod files via e.g.
+```bash
+podlet compose --pod  docker-compose.sqlite.yml
 ```
+ The resulting files require minimal adjustments to include, e.g., the right hostnames and auto-updating.
 
-and a bunch of dynamic configs:
 
-```toml
-# /var/lib/docker-confs/traefik/dynamic/karakeep.toml
-[http]
-  [http.middlewares]
-    [http.middlewares.karakeep-redirect.redirectScheme]
-        scheme = "https"
+#### Rootless
 
-  [http.routers.karakeep-redirect]
-    entrypoints = ["web"]
-    rule = "Host(`<redacted>`)"
-    middlewares = ["karakeep-redirect"]
-    service = "karakeep"
-
-  [http.routers.karakeep]
-    entrypoints = ["websecure"]
-    rule = "Host(`<redacted>`)"
-    service = "karakeep"
-    [http.routers.karakeep.tls]
-        certResolver = "letsencrypt"
-
-  [http.services]
-    [http.services.karakeep.loadBalancer]
-      [[http.services.karakeep.loadBalancer.servers]]
-        url = "http://host.containers.internal:8012/"
+The other feature i cherish is true rootless containers. For Paperless-ngx, this looks like:
+```bash
+$ podman top paperlessng-web  uid huser pid  comm
+UID         HUSER       PID         COMMAND
+0           1444        1           s6-svscan
+0           1444        16          s6-supervise
+0           1444        17          s6-linux-init-s
+0           1444        30          s6-supervise
+0           1444        31          s6-supervise
+0           1444        32          s6-supervise
+0           1444        33          s6-supervise
+0           1444        34          s6-supervise
+0           1444        35          s6-supervise
+0           1444        36          s6-supervise
+0           1444        44          s6-ipcserverd
+1000        166535      159         [celeryd: celer
+1000        166535      161         python3
+1000        166535      166         [celery beat] -
+1000        166535      174         granian asginl 
+1000        166535      194         granian asginl 
+1000        166535      250         [celeryd: celer
 ```
+So inside the container namespace, we have several root processes, such as the s6 init and supervisor. The actual application with a python worker, granian web server and celery message queue runs as UID 1000 user without root privileges. On the host system, both users are mapped to different UIDs, the one of the user which executed podman (1444) and one of its subuids (166535). Neither the application has root privileges inside the container namespace not the containers root user would have root provileges on the host if it were to escape the container.
 
-Again, this is beautifully explicit and simple: We tell Traefik where to find our dynamic configs, set ports and timeouts, and Letsencrypt. For each service, we tell it to redirect HTTP requests to the HTTPS router and pass them to port 8012 of the host machine. That's it!
 
-My only peeve here is that in order to access all services and privileged ports, I am currently running this container as root. This can probably be fixed easily, but I still haven't found the time or motivation.
+
+
 
 #### IPv6
 
@@ -365,11 +255,16 @@ WantedBy=multi-user.target default.target
 
 There is probably a more elegant solution to this problem, but I actually have never had any issues in five years or even wasted a thought on this, so why change it.
 
-The next issue was related to DynDNS. There simply was (or still is?) no DynDNS client available that had proper IPv6 support, so I had to build my own [tiny IPv6 DynDNS updater](https://gitlab.com/lackhove/ddupdate), but this is probably worth a separate article.
+## Further topics
+
+Besides the base OS and the podman configuration, there are a few additional componets i hav ein place for reducing maintenance and complexity. As reverse proxy i prefer [Traefik](https://doc.traefik.io/traefik/) for its excellent documentation, simple letsencrypt integration and simple setup (yes, you read that right).
+
+One issue i had to solve was DynDNS. There simply was (or still is?) no DynDNS client available that had proper IPv6 support, so I had to build my own [tiny IPv6 DynDNS updater](https://gitlab.com/lackhove/ddupdate).
+A crucial ingredient for a reliable selfhosting setup is of course backups. I run nightly, incremental off-site backups using [duplicacy](https://github.com/gilbertchen/duplicacy) and a [bespoke automation](https://gitlab.com/lackhove/superdup). But both topics are probably worth separate articles.
 
 
-## Next Steps
+## Next Steps and Conclusions
 
-As with any self-hosting setup, you are never finished.
+As with any self-hosting setup, you are never finished. One thing i should probably get sorted out is moving mdadm notifications into a container. I am already using scrutiny for monitoring my HDDs SMART status, so right now i just hope for someone to implement [the feature request](https://github.com/AnalogJ/scrutiny/issues/415). Another issue is nextcloud, which is one of the most important applications i host but requires attention due to something breaking every few months. 
 
-...
+Im am not going to bore you with a list of services i am running, instead, i think its more interesting to metnion what i am not running: Email and this website. Why? Email is just too essential and at the same time too complicated to properly to set up and maintain, especially for my whole family. Instead, i just rely on the service by my domain registrar. Similarly, i dont see the benefit in hosting a public website, wehere everything is public anyway, so you have downloaded this html from github pages. This is the final building block to reducing complexity in selfhosting: Knowing what not to host.
