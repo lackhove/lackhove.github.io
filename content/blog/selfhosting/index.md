@@ -1,5 +1,5 @@
 +++
-title = "From Hobby to Chore and Back in 13 years: My Low-Complexity Self-Hosting Stack with OpenSUSE MicroOS and Podman Rootless Containers"
+title = "The Low-Complexity Stack: OpenSUSE MicroOS and Podman for Reliable Self-Hosting"
 date = 2025-10-10
 +++
 
@@ -37,29 +37,27 @@ My only remaining peeve with Fedora CoreOS was the slow updates due to `ostree` 
 
 ## If It's Complicated, It's a Chore
 
-The main thing I learned in 13 years of self-hosting is that when moving from hosting a simple file server for yourself to a range of critical services for family and friends, the top priority is reducing complexity. Every additional piece of hardware, daemon, container, service, or even configuration file increases your cognitive load and the likelihood of failures, issues and security risks. Or to put it more graphic: You really don't want to start debugging your Kubernetes setup when an update made the living room lights go haywire on Christmas Eve.
+The main thing I learned in 13 years of self-hosting is that when moving from hosting a simple file server for yourself to a range of critical services for family and friends, the **top priority is reducing complexity**. Every additional piece of hardware, daemon, container, service, or even configuration file increases your cognitive load and the likelihood of failures, issues and security risks. Or to put it more vividly: You really don't want to start debugging your Kubernetes setup when an update made the living room lights go haywire on Christmas Eve.
 
 Committing to reducing complexity gives me the following essential benefits:
 
-* **Zero-Touch Maintenance:** I can barely remember the last time I had to log in to perform chores. Thanks to OpenSUSE MicroOS's transactional updates and Podman's auto-updating containers, the entire stack is always current and even automatically rolls back if a bad update breaks something.
+* **Automated Maintenance and Recovery**: openSUSE MicroOS's transactional design and Podman's auto-updating containers handle updates  automatically and roll back bad ones.  Furthermore, Btrfs snapshots enable instant recovery of the host OS to a known good state with a single command. In case of a disaster, the stack's inherent simplicity allows the system to be restored with a tool as simple as rsync,
 
 * **Inherent Security by Design:** By keeping the system minimal, up-to-date and exposing only what's necessary, the attack surface is drastically minimized. If a container is breached, the impact is (hopefully) contained by SELinux, rootless Podman containers and having a minimal, immutable host OS.
 
-* **Minimized Points of Failure:** Fewer moving parts means fewer things that might break. I deliberately chose not to use layers like hypervisors (Proxmox), orchestration (Kubernetes/Ansible), or container management GUIs (Portainer). My stack is simply a minimal, immutable bare metal OS running Podman containers. This core simplicity prevents failures and makes diagnosing any issues straightforward.
+* **Minimized Points of Failure:** Fewer moving parts means fewer things that might break. I deliberately chose not to use layers like hypervisors, orchestration or container management GUIs. My stack only has to levels. This prevents failures and makes diagnosing any issues straightforward.
 
 * **Reduced Cognitive Load:** I log on to my server every few months, so the KISSprinciple is law. Since I've avoided complex layers, my entire infrastructure is defined by simple systemd units and human-readable configuration files. Simple solutions are always easier to debug when you're under pressure.
-
-* **Swift Disaster Recovery:** Failure is inevitable, so my goal is to minimize its impact. Thanks to the atomic updates and Btrfs snapshots, I can recover the entire host OS to a known good state with a single command. Moreover, the stack's inherent simplicity allows the system to be restored on new hardware from a basic backup using tools like `rsync`, avoiding the complexity of dedicated IaaS tools.
-
-
 
 
 ## My Low-Complexity Self-Hosting Stack
 
+The following breakdown details the rationale and design choices behind each level of my stack. My goal here is to give an overview of the architectural decisions and hightlight pitfalls not to offer a tutorial. That might be soemthing for a future post.
+
 ### Level 0: The Hardware
 
 As mentioned earlier, the hardware is a mini-ITX server with an Intel N100 low-power CPU and a cheap SSD for the OS. The most interesting part is what the system doesnt have: a fan. The only mechanical parts that will fail are the two 3.5" HDDs, which are redundant as RAID1.
-The OS is installed on bare metal, so no complexity is added by a hypervisor. Instead, there is a [PiKVM](https://pikvm.org/) attached to the server, which gives me full control of the hardware, independent of the OS:
+The OS is installed on bare metal, so no complexity is added by a hypervisor such as Proxmox. Instead, there is a [PiKVM](https://pikvm.org/) attached to the server, which gives me full control of the hardware, independent of the OS:
 * If the OS fails to boot or an hardware error occurs, I can still access the BIOS, push power and reset buttons and virtually plug in recovery ISOs from anywhere.
 * The PiKVM is only accessible from within my home network (or Wireguard when not at home), so one less attack vector I need to worry about
 * The server can operate without the PiKVM, so this adds zero complexity to the stack.
@@ -255,7 +253,7 @@ WantedBy=multi-user.target default.target
 
 There is probably a more elegant solution to this problem, but I actually have never had any issues in five years or even wasted a thought on this, so why change it.
 
-## Further topics
+## Complementary Tools and Considerations
 
 Besides the base OS and the podman configuration, there are a few additional componets i hav ein place for reducing maintenance and complexity. As reverse proxy i prefer [Traefik](https://doc.traefik.io/traefik/) for its excellent documentation, simple letsencrypt integration and simple setup (yes, you read that right).
 
@@ -263,7 +261,7 @@ One issue i had to solve was DynDNS. There simply was (or still is?) no DynDNS c
 A crucial ingredient for a reliable selfhosting setup is of course backups. I run nightly, incremental off-site backups using [duplicacy](https://github.com/gilbertchen/duplicacy) and a [bespoke automation](https://gitlab.com/lackhove/superdup). But both topics are probably worth separate articles.
 
 
-## Next Steps and Conclusions
+## Future Work and Final Thoughts
 
 As with any self-hosting setup, you are never finished. One thing i should probably get sorted out is moving mdadm notifications into a container. I am already using scrutiny for monitoring my HDDs SMART status, so right now i just hope for someone to implement [the feature request](https://github.com/AnalogJ/scrutiny/issues/415). Another issue is nextcloud, which is one of the most important applications i host but requires attention due to something breaking every few months. 
 
