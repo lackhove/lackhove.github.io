@@ -1,6 +1,6 @@
 +++
 title = "The Low-Complexity Stack: Self-Hosting with OpenSUSE MicroOS and Podman"
-date = 2025-10-10
+date = 2025-10-24
 +++
 
 When the Raspberry Pi launched in 2012, I was lucky enough to snatch one of the first batches. This is when I caught the self-hosting bug. At that time, I was a student with ample spare time and few responsibilities. I viewed self-hosting as a way to reduce my dependency on the cloud (a.k.a. other people's computers) and take back ownership of my data, but most importantly as a technology playground. Thirteen years later, I have a day job and a family. The server now runs crucial applications like home automation and provides services my extended family depends on. This creates a clear conflict: The demand for high availability clashes directly with my limited spare time to maintain it. For this core server, its raison d'être has shifted entirely from a playground to an essential reliable utility. I can still keep my Raspberry Pis for fun and experimentation, but nobody but me notices when they break. Ultimately, I want to be the one to decide when I spend time on my hobby projects, not some mandatory update or software release schedule.
