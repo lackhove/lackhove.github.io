@@ -37,7 +37,7 @@ The both have a very similar approach and basically allow for setting most / all
 
 ## Building my own orchestration, with blackjack and golang
 
-It seems like, despite restics large community, none of the existing solution meets my requirements, so i decided to once again, run my own. I first contemplated building a suite of restic helpers for email-notification, summary generation etc. that i could integrate with resticprofiles but soon realized that with this approach i would end up programming in YAML, wich is awful. Instead, i wanted a simple language that has great support for handling environment variables, serial execution of external applications and handling their outputs and exit codes. This sounds just like the vererable Bash! 
+It seems like, despite restics large community, none of the existing solution meets my requirements, so i decided to once again, run my own. I first contemplated building a suite of restic helpers for email-notification, summary generation etc. that i could integrate with resticprofiles but soon realized that with this approach i would end up programming in YAML, wich is awful. Instead, i wanted a simple language that has great support for handling environment variables, serial execution of external applications and handling their outputs and exit codes. So in short: good old Bash! 
 
 
 The setup i finally settled on is published on github as [restic-kit](https://github.com/lackhove/restic-kit). At its core, restic-kit is configured via a dead simple shell script that comprises multiple restic calls like this
@@ -98,26 +98,22 @@ The `restic-kit` executable has several subcommands:
 * **audit**: Audit restic snapshots for size anomalies. Checks for unusual size changes between the two most recent snapshots per path. Sends email notifications for any failures.
 * **cleanup**: Remove the log directory if all backup operations were successful. Keep it for debugging if any operations failed.
 
-golang  produces self contained executables without any OS dependencies, which i can run directly on the server without any containers or external dependencies. This greatly simplifies setup and remote credential storage while still being relatively low-complexity. The whole project ended up being uch larger in terms of LOC than superdup, partly because golang is a more verbose language, but mostly because it just has more features. A year ago, i would have probably settled on a simpler solution, but with the advent of LLM coding agents, the implementation only took a few hours. The whole project was vibe-engineered, with just a handful of lines written with my bare hands (but every single one carefully reviewed). The resulting code is not as good as if it was hand-crafted, but good enough for a  project which will likely never be used by anyone but me. This highlights an interesting aspect:  Instead of contributing to an existing project on github i could just build my own in a matteer of hours for a few dollars woth of tokens. Building bespoke software has become cheap. I am not sure what this means for the FOSS ecosystem, but lets hope its a good thing.
+golang  produces self contained executables without any OS dependencies, which i can run directly on the server without any containers or external dependencies. This greatly simplifies setup and remote credential storage while still being relatively low-complexity. 
 
 
-## Obscurity is not Security
+## Security and Obscurity
 
 Going back to my initial list of requoremtns, the combnation of restic-kit and a simple sysmted timer supports  Sequential execution, Simple configuration, Automatic summary email sending, backup monitoring and Heathchecks.io Ping. Whats still missing is the ransomare-proofness, that initially triggered this whole endaevour. Benjamin Ritter [first described](https://medium.com/@benjamin.ritter/how-to-do-ransomware-resistant-backups-properly-with-restic-and-backblaze-b2-e649e676b7fa) how to set up restic with backblaze for WORM backups, so i am going to reiterate this here. I only deviated from his setup by setting `daysFromHidingToDeleting` to  `null`, so nothing will get automatically deleted. Instead, i set an appointment in my calendar to manually check the backups integrity and delete the hidden files manually every few months.
 
-The central 
+Even with the WORM strategy being the central protection against ransomware attacks, i still prefer not storing the backup credentials and performing the irregularity scanning and notifying on the server itself. This contrasts the requirement for automated, unattaneded backups, which requires access to all credentials. The way out of this dilemma is an external backup system, which pulls the data from the server. This however requires a high bandwith network connection and sufficient CPU power to perform chunking, deduplication and encryption. For ma home serer setup, the invest and and operational costs of such a sysstem seems overkill, so instead i built the next best solution baed on a raspberry pi zero i still had in my hobby drawer.
+
+The setup is as follows: The Pi runs a minimal read-only OS that runs nothing but the backup  and is only accessible via a password protected ssh key. The backup shell script is triggered by a systemd timer and executes most restic commands and all restic-kit commands locally. Only the restic backup command is executed on the server via ssh with credeitals being passed as environment variables using the SSHs SetEnv functionality. For each bakup run, a clean restic executable is copied to the server and deleted afterwards. This is designed to prevent an attacker from tampering with the restic executable and more importantly, to not leave any trace of the backup on the server itself. Even with root access, an attacker wont find a single hint in ther servers file system that there is a backup to begin with, making it more unlikely for my backup being targeted in a ransomware attack. In addition, all checks and notifications run on an isolated system, so even in case of an attack, i can still hope for my monitopring to notice.
+
+ This is however just **obscurity** and shouldnt be mistaken as **security**. An attacker with root access and sufficient knowledge will still be able to eavesdrop on the backups credentials and empty my snapshots. The only security here is provided by the WORM configuration and occasional backups to an external hard drive stored offsite.
 
 
+## Future Work and Final Thoughts
 
-### 5. Security Concept and Obscurity
+The system now has been running for a few weeks and so far, works as expected. When it comes to ransomeare proofness, i hope that i will never have the chance to verify its effectiveness, but at least the known  vulurabilities are mitigated. Ther is always room for improvement, so in the coming weeks, i might extend the `audit` functionality to scan for suspicious snapshots patterns and auto update the restic executables.
 
-* **Infrastructure for Security Hardening:**
-    * Script and Go executable run on a **separate system** (**Raspberry Pi Zero**).
-    * **Raspberry Pi Zero Hardening:**
-        * Accessible **only from Notebook** via **password-protected SSH key**.
-        * **No other services** are running, only the **Cronjob** starts the backup script.
-* **Backup Preparation:** The separate system connects to the host via **SSH**, copies a **fresh Restic executable**, and passes **passwords via environment variable**.
-* **Advantage of Offloading:** The **detection of Junk Backup Attacks** runs **outside** of the secured system.
-* **Open Vulnerability (Limits of Security):** Does **not offer 100% protection** (root attacker can harvest passwords).
-* **Gained Advantage (Obscurity):** An attacker finds **no hints about the existence of a backup** on the host.
-* **Essential Protection:** The **Append-Only mode** of the backup provides the **crucial protection** against data deletion.
+The whole project ended up being much larger in terms of LOC than superdup, partly because golang is a more verbose language, but mostly because it just has more features. A year ago, i would have probably settled on a simpler solution, but with the advent of LLM coding agents, the implementation only took a few hours. The whole project was vibe-engineered, with just a handful of lines written with my bare hands but every single line carefully reviewed. The resulting code is not as good as if it was hand-crafted, but good enough for a project a user base of probaly just me. This highlights an interesting aspect:  Instead of contributing to an existing project on github i could just build my own in a matteer of hours for a few dollars woth of tokens. Building bespoke software has become cheap. I am not sure what this means for the FOSS ecosystem, but i want to be optimistic.
