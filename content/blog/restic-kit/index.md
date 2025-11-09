@@ -37,15 +37,76 @@ The both have a very similar approach and basically allow for setting most / all
 
 ## Building my own orchestration, with blackjack and golang
 
-Apparently 
+It seems like, despite restics large community, none of the existing solution meets my requirements, so i decided to once again, run my own. I first contemplated building a suite of restic helpers for email-notification, summary generation etc. that i could integrate with resticprofiles but soon realized that with this approach i would end up programming in YAML, wich is awful. Instead, i wanted a simple language that has great support for handling environment variables, serial execution of external applications and handling their outputs and exit codes. This sounds just like the vererable Bash! 
 
-### 3. Evaluation and Discarding of Alternatives
 
-* **Evaluated Alternatives:** **Backrest**, **Restic Profiles**, **Autorestic**.
-* **Reason for Discarding Backrest:** Runs as a **server** (port open to the outside), keeps **credentials in memory**—represents a direct **attack vector**.
-* **Reasons for Discarding Restic Profiles / Autorestic:**
-    * **No possibility for sequential execution**.
-    * **No pre-built email summary functionality**.
+The setup i finally settled on is published on github as [restic-kit](https://github.com/lackhove/restic-kit). At its core, restic-kit is configured via a dead simple shell script that comprises multiple restic calls like this
+```bash
+echo "Getting repository snapshots..."
+$RESTIC snapshots \
+    --group-by=paths \
+    --json > "$TEMP_DIR/snapshots.out" 2> "$TEMP_DIR/snapshots.err"
+echo $? > "$TEMP_DIR/snapshots.exitcode"
+```
+Here, the restic "snapshots" action is executed and its STDOUT, STDERR and exit code stored i dedicated files inside a temporary directory. All secrets are passed as environment variables so they dont appear in the process list. At the end of the script a simple golang executable parses these files for each step.
+
+These more complex tasks are implemented in a single `restic-kit` golang executable, e.g.
+```bash
+$RESTIC_KIT notify-http \
+    --url "https://hc-ping.com/<uuid>" \
+    "$TEMP_DIR" || true
+```
+which parses all files in the temporary directory and pings e.h. healthchecks.io with success or fail, depeneding on the exit codes.
+
+The `restic-kit` executable has several subcommands:
+* **notify-email**: Send an email notification with overall success and a short summary for each restic command:
+    ```
+    Overall Status: SUCCESS
+
+    ✅ backup etc
+    Files: 0 new, 0 changed, 300 unmodified
+    Directories: 0 new, 0 changed, 159 unmodified
+    Data added: 0 B (0 B packed)
+    Total files processed: 300
+    Total bytes processed: 23.4 MB
+    Duration: 3.64 seconds
+
+    ✅ forget
+    4 snapshots removed
+
+    ✅ check
+    PASSED
+
+    ✅ snapshots
+    Repository Snapshots: 27
+
+    Path: /etc
+    Snapshots: 9
+    Date & Time      | New | Modified | Total Files | Added Size | Total Size
+    ---------------- | --- | -------- | ----------- | ---------- | ----------
+    2025-11-08 14:12 |   0 |        0 |         300 |        0 B |    23.4 MB
+    2025-11-07 02:30 |   0 |        1 |         299 |    57.5 KB |    23.4 MB
+    2025-11-06 02:30 |   0 |        1 |         299 |    57.5 KB |    23.4 MB
+    2025-11-05 02:30 |   0 |       12 |         299 |     5.6 MB |    23.4 MB
+    2025-11-04 02:30 |   0 |        1 |         299 |    57.5 KB |    23.4 MB
+    2025-11-03 02:30 |   0 |        1 |         299 |    57.5 KB |    23.4 MB
+    2025-11-02 02:30 |   0 |        0 |         299 |        0 B |    23.4 MB
+    2025-10-31 14:36 |   0 |        0 |         299 |        0 B |    23.4 MB
+    2025-10-30 23:34 |   0 |        0 |         298 |        0 B |    23.4 MB
+    ```
+* **notify-http**: Perform a single HTTP GET request to notify an external service. In case an error was detected, the path `/fail` is appended, so that the correct state is displayed by e.h. healthchecks.io.
+* **wait-online**: Wait for network connectivity by checking if a URL is reachable with exponential backoff.
+* **audit**: Audit restic snapshots for size anomalies. Checks for unusual size changes between the two most recent snapshots per path. Sends email notifications for any failures.
+* **cleanup**: Remove the log directory if all backup operations were successful. Keep it for debugging if any operations failed.
+
+
+
+
+golang  produces self contained executables without any OS dependencies, which i can run directly on the server without any containers or external dependencies. This greatly simplifies setup and remote credential storage while still being relatively low-complexity.
+
+
+
+
 
 ---
 
