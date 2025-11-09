@@ -1,6 +1,6 @@
 +++
-title = "My restic-kit Backup Strategy: Ransomware-Proofing Low Complexity Self-Hosting"
-date = 2025-11-06
+title = "Restic-kit: Orchestrating and Monitoring a Ransomware-Proof Backup Stack"
+date = 2025-11-09
 +++
 
 When I was a teenager and still living at my parents', lightning struck our neighborhood, blasting sockets from the walls and frying most electronic devices in our home, including the TV, telephones and most importantly, my PC. Luckily, the most important data on its hard disk were a couple of save games and my handcrafted Debian Sarge installation. Nonetheless, this taught me an important lesson about backups early on and I've been very serious about data preservation ever since.
@@ -31,7 +31,7 @@ Backrest is a web GUI for restic and seems to be the most popular solution (on G
 
 Resticprofile and autorestic both have a very similar approach and basically allow for setting most or all restic parameters in a configuration file. The individual actions such as `backup`, `check` and `forget` are triggered via systemd timers or cron. resticprofile supports healthchecks.io pings, but neither solution can generate (and send) email notifications or monitor for irregularities. What really grinds my gears, however, is that they both cannot run all backup steps sequentially. You have to create timers for each step, so, for example, running your backups at 01:00, forget at 02:00 and prune at 3:00, which will break havoc when one of these steps takes longer than expected.
 
-## Building my own Orchestration, with Blackjack and Go
+## Building my own Orchestration, with Blackjack and Golang
 
 It seems like, despite restic's large community, none of the existing solutions meet my requirements, so I decided to once again, roll my own. I first contemplated building a suite of restic helpers for email notification, summary generation, etc., that I could integrate with resticprofiles but soon realized that with this approach I would end up programming in YAML, which is a royal PITA. Instead, I wanted to describe the backup flow in a simple language that has great support for serial execution of external applications and handling their outputs and exit codes. So in short: good old **Bash**!
 
