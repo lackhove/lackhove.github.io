@@ -42,7 +42,6 @@ It seems like, despite restics large community, none of the existing solution me
 
 The setup i finally settled on is published on github as [restic-kit](https://github.com/lackhove/restic-kit). At its core, restic-kit is configured via a dead simple shell script that comprises multiple restic calls like this
 ```bash
-echo "Getting repository snapshots..."
 $RESTIC snapshots \
     --group-by=paths \
     --json > "$TEMP_DIR/snapshots.out" 2> "$TEMP_DIR/snapshots.err"
@@ -99,28 +98,16 @@ The `restic-kit` executable has several subcommands:
 * **audit**: Audit restic snapshots for size anomalies. Checks for unusual size changes between the two most recent snapshots per path. Sends email notifications for any failures.
 * **cleanup**: Remove the log directory if all backup operations were successful. Keep it for debugging if any operations failed.
 
+golang  produces self contained executables without any OS dependencies, which i can run directly on the server without any containers or external dependencies. This greatly simplifies setup and remote credential storage while still being relatively low-complexity. The whole project ended up being uch larger in terms of LOC than superdup, partly because golang is a more verbose language, but mostly because it just has more features. A year ago, i would have probably settled on a simpler solution, but with the advent of LLM coding agents, the implementation only took a few hours. The whole project was vibe-engineered, with just a handful of lines written with my bare hands (but every single one carefully reviewed). The resulting code is not as good as if it was hand-crafted, but good enough for a  project which will likely never be used by anyone but me. This highlights an interesting aspect:  Instead of contributing to an existing project on github i could just build my own in a matteer of hours for a few dollars woth of tokens. Building bespoke software has become cheap. I am not sure what this means for the FOSS ecosystem, but lets hope its a good thing.
 
 
+## Obscurity is not Security
 
-golang  produces self contained executables without any OS dependencies, which i can run directly on the server without any containers or external dependencies. This greatly simplifies setup and remote credential storage while still being relatively low-complexity.
+Going back to my initial list of requoremtns, the combnation of restic-kit and a simple sysmted timer supports  Sequential execution, Simple configuration, Automatic summary email sending, backup monitoring and Heathchecks.io Ping. Whats still missing is the ransomare-proofness, that initially triggered this whole endaevour. Benjamin Ritter [first described](https://medium.com/@benjamin.ritter/how-to-do-ransomware-resistant-backups-properly-with-restic-and-backblaze-b2-e649e676b7fa) how to set up restic with backblaze for WORM backups, so i am going to reiterate this here. I only deviated from his setup by setting `daysFromHidingToDeleting` to  `null`, so nothing will get automatically deleted. Instead, i set an appointment in my calendar to manually check the backups integrity and delete the hidden files manually every few months.
+
+The central 
 
 
-
-
-
----
-
-### 4. The New Custom Development (Architecture)
-
-* **Decision:** Develop a custom solution, as no existing solution meets the profile.
-* **Environment Constraint:** **Exclusively Shell and Python** on the target system.
-* **Change in Approach:** **Programming in Go is fun, but not in YAML ("Gammel")**. Switch to a **scripting language** for flow control.
-* **Re-Engineering:** The **Go executable** from the initial (discarded) approach was **re-engineered (vibe engineered)** to handle complex tasks.
-* **Final Orchestration Structure:**
-    * **Flow Control:** **Very simple Bash script**.
-    * **Complexity Offloaded (Go Executable):** Responsible for **status report**, **junk-attack analysis**, email sending, health checks, waiting for online status.
-
----
 
 ### 5. Security Concept and Obscurity
 
