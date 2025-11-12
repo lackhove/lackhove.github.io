@@ -3,7 +3,7 @@ title = "Restic-kit: Orchestrating and Monitoring Ransomware-Proof Backups"
 date = 2025-11-09
 +++
 
-**TLDR: I built [restic-kit](https://github.com/lackhove/restic-kit)**
+**TLDR: I built [restic-kit](https://github.com/lackhove/restic-kit) to orchestrate my backups**
 
 When I was a teenager and still living at my parents', lightning struck our neighborhood, blasting sockets from the walls and frying most electronic devices in our home, including the TV, telephones and most importantly, my PC. Luckily, the most important data on its hard disk were a couple of save games and my handcrafted Debian Sarge installation. Nonetheless, this taught me an important lesson about backups early on and I've been very serious about data preservation ever since.
 
