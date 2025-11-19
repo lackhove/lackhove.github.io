@@ -107,6 +107,54 @@ The setup is as follows: The Pi runs a minimal read-only OS that runs nothing bu
 
 This is, however, just **obscurity** and shouldn't be mistaken as **security**. An attacker with root access and sufficient knowledge will still be able to eavesdrop on the backup's credentials and empty my snapshots. The only true security here is provided by the WORM configuration and occasional backups to an external hard drive stored offsite.
 
+
+## Migrating Existing Backups
+
+One caveat of switching backup tools is that you have to keep the backups created with the old tool around for a long time and cannot leverage deduplication between the two incompatible backup storages. With hundreds of Gigabytes spanning many months, this can become expensive. The last time I switched (from duplicity to duplicacy), I swallowed that pill, but with LLM coding agents available, the cost for implementing a migration tool has decreased significantly.
+
+My migration strategy was to restore duplicacy backups to my server, iterating from latest to oldest with these steps:
+
+1.  Make a copy of the directory that is backed up (e.g., `/etc`).
+2.  Restore the latest duplicacy snapshot of this directory to the copy, using the restore settings to delete additional files and overwrite modified files.
+3.  Perform a restic backup of the copy.
+4.  Restore the next oldest duplicacy snapshot to the copy and go back to step 3.
+
+This strategy minimizes downloading the full backup on each iteration. Since most data in self-hosting (e.g., photos or configuration files) is only added over time and rarely deleted or modified, this approach also minimizes file downloads between each incremental restore.
+
+The major disadvantage is that, in the resulting restic repository, the parent-child relations between each snapshot are reversed. Since restic relies on the parent-child chain for pruning, reversing the history may cause issues with the `restic forget` command. I only noticed that the parent cannot be easily changed with `restic rewrite` when it was already too late.
+
+The strategy was implemented in a Python script by an LLM coding agent (opencode) and is available [on GitHub](https://github.com/lackhove/duplicacy-restic-migration). The script worked flawlessly, and after about two days of restoring and backing up, all snapshots were migrated:
+```
+  Path: /mnt/duplicacy_migration/etc
+  Snapshots: 18
+  Date & Time      | New | Modified | Total Files | Added Size | Total Size
+  ---------------- | --- | -------- | ----------- | ---------- | ----------
+  2025-10-31 02:46 | 298 |        0 |         298 |   254.1 KB |    23.4 MB
+  2025-10-30 02:46 | 298 |        0 |         298 |    57.4 KB |    23.4 MB
+  2025-10-29 02:38 | 298 |        0 |         298 |    57.1 KB |    23.4 MB
+  2025-10-27 02:43 | 302 |        0 |         302 |   129.8 KB |    23.4 MB
+  2025-10-26 02:30 | 295 |        0 |         295 |   102.2 KB |    23.4 MB
+  2025-10-25 02:30 | 295 |        0 |         295 |    56.8 KB |    23.4 MB
+  2025-10-20 03:00 | 292 |        0 |         292 |     9.4 MB |    23.4 MB
+  2025-10-13 02:30 | 291 |        0 |         291 |     9.4 MB |    23.4 MB
+  2025-10-06 02:31 | 291 |        0 |         291 |    59.6 KB |    23.4 MB
+  2025-09-01 02:30 | 290 |        0 |         290 |    22.2 MB |    23.2 MB
+  2025-07-28 02:34 | 291 |        0 |         291 |     9.8 MB |    23.2 MB
+  2025-06-23 02:31 | 292 |        0 |         292 |    22.2 MB |    23.2 MB
+  2025-05-19 02:37 | 290 |        0 |         290 |    21.7 MB |    23.1 MB
+  2025-04-14 02:41 | 290 |        0 |         290 |     9.8 MB |    23.0 MB
+  2025-03-10 02:38 | 281 |        0 |         281 |     9.5 MB |    22.5 MB
+  2025-02-03 03:28 | 282 |        0 |         282 |    26.3 MB |    27.1 MB
+  2024-12-30 02:42 | 363 |        0 |         363 |   310.5 KB |    27.1 MB
+  2024-11-24 02:59 | 359 |        0 |         359 |    27.0 MB |    27.1 MB
+```
+The last step was deleting the Backblaze bucket, saving me about 50€!
+
+
+
+
+
+
 ## Future Work and Final Thoughts
 
 The system has now been running for a few weeks and so far, works as expected. When it comes to ransomware-proofness, I hope that I will never have the chance to verify its effectiveness, but at least the known vulnerabilities are mitigated. There is always room for improvement, so in the coming weeks, I might extend the `audit` functionality to scan for suspicious snapshot patterns and auto-update the restic executables.
