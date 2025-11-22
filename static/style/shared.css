@@ -123,8 +123,9 @@
   }
 
   pre {
-  padding: 1rem;
+  padding: 5px;
   overflow: auto;
+  background-color: var(--code-background-color) !important;
 }
 /* The line numbers already provide some kind of left/right padding */
 pre[data-linenos] {
@@ -153,7 +154,7 @@ pre table {
     background-color: var(--code-background-color);
     color: var(--code-color);
     display: block;
-    padding: 20px;
+    padding: 10px;
     white-space: pre-wrap;
     font-size: 0.875rem;
     overflow-x: auto;
