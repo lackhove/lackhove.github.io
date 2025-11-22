@@ -89,7 +89,7 @@ TimeoutStopSec=70
 [Container]
 ContainerName=mosquitto
 Image=docker.io/eclipse-mosquitto:2
-AutoUpdate=image
+AutoUpdate=registry
 PublishPort=1883:1883
 PublishPort=9001:9001
 Volume=/var/lib/docker-confs/mosquitto/config:/mosquitto/config/:Z,U
@@ -147,7 +147,7 @@ TimeoutStopSec=70
 ContainerName=paperlessngx-redis
 Pod=paperlessngx.pod
 Image=docker.io/redis:8
-AutoUpdate=image
+AutoUpdate=registry
 ```
 ```ini
 # paperlessngx-web.container
@@ -159,7 +159,7 @@ TimeoutStopSec=70
 ContainerName=paperlessngx-web
 Pod=paperlessngx.pod
 Image=ghcr.io/paperless-ngx/paperless-ngx:latest
-AutoUpdate=image
+AutoUpdate=registry
 Volume=/var/lib/docker-confs/paperless-ngx/data:/usr/src/paperless/data:Z,U
 Volume=/var/lib/docker-confs/paperless-ngx/media:/usr/src/paperless/media:Z,U
 Volume=/var/lib/docker-confs/paperless-ngx/export:/usr/src/paperless/export:Z,U
