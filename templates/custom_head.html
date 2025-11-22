@@ -14,3 +14,7 @@
 </picture>
 
 <script defer src="https://cloud.umami.is/script.js" data-website-id="fd2c93e5-5325-4c3c-b0a7-a2249976e7b8"></script>
+
+{% block rss %}
+<link rel="alternate" type="application/rss+xml" title="RSS" href="{{ get_url(path="rss.xml", trailing_slash=false) }}">
+{% endblock %}
