@@ -1,6 +1,6 @@
 +++
 title = "Restic-kit: Orchestrating and Monitoring Ransomware-Proof Backups"
-date = 2025-11-09
+date = 2025-11-23
 +++
 
 **TLDR: I built [restic-kit](https://github.com/lackhove/restic-kit) to orchestrate my backups**
@@ -90,7 +90,23 @@ which notifies healthchecks.io. The `restic-kit` executable has several subcomma
     ```
 * **notify-http**: Perform a single HTTP GET request to notify an external service (e.g., healthchecks.io)  with success or fail, depending on the exit codes parsed from the temporary directory.
 * **wait-online**: Wait for network connectivity by checking if a URL is reachable with exponential backoff.
-* **audit**: Audit restic snapshots for size anomalies. Checks for unusual size changes between the two most recent snapshots per path. Sends email notifications for any failures.
+* **audit**: Audit restic snapshots for size anomalies. Checks for unusual size changes between the two most recent snapshots per path. Sends email notifications for any failures, e.g.:
+    ```
+    Audit Report: FAILURES DETECTED
+
+    Total failed checks: 1
+
+    === SIZE_SHRINK ===
+    Path: /path/to/docker-confs
+    Issue: 16.2% change exceeds 5.0% threshold
+    Details:
+    previous_size: 11.4 GB
+    current_size: 9.6 GB
+    change_percent: 16.2
+    threshold: 5.0
+    previous_time: 2025-10-27T02:30:00+01:00
+    current_time: 2025-10-31T02:30:00+01:00
+  ```
 * **cleanup**: Remove the log directory if all backup operations were successful. Keep it for debugging if any operations failed.
 
 Go produces self-contained executables without any OS dependencies, which I can run directly on the server without any containers or external dependencies. This greatly simplifies setup and remote credential storage while still being relatively low-complexity.
